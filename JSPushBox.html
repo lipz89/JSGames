@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>推箱子</title>
+    <style type="text/css">
+        #main {
+            margin: 30px auto;
+            width: 450px;
+            height: 263px;
+            padding: 5px;
+            border-top: 2px solid #66d;
+            border-left: 2px solid #66d;
+            border-right: 2px solid #aaf;
+            border-bottom: 2px solid #aaf;
+        }
+
+        #work {
+            margin: 10px;
+            float: left;
+            border-top: 2px solid #aaf;
+            border-left: 2px solid #aaf;
+            border-right: 2px solid #66d;
+            border-bottom: 2px solid #66d;
+            width: 240px;
+            height: 240px;
+            background: url(box/Empty.png);
+        }
+
+            #work div {
+                width: 30px;
+                height: 30px;
+                float: left;
+            }
+
+        .box {
+            background: url(box/Box.png);
+        }
+
+        .boxonplace {
+            background: url(box/BoxOnPlace.png);
+        }
+
+        .empty {
+            background: url(box/Empty.png);
+        }
+
+        .man {
+            background: url(box/Man.png);
+        }
+
+        .manonplace {
+            background: url(box/ManOnPlace.png);
+        }
+
+        .target {
+            background: url(box/Target.png);
+        }
+
+        .wall {
+            background: url(box/Wall.png);
+        }
+
+        #right {
+            float: right;
+            height: 250px;
+        }
+
+            #right div {
+                margin: 5px 0;
+                width: 180px;
+                border-bottom: 1px solid #aaf;
+                cursor: pointer;
+                font-size: 12px;
+                padding: 5px 0px 0px 2px;
+            }
+    </style>
+    <script type="text/javascript">
+
+        var map = new Array();
+        var step = 0;
+        var level = 0;
+        var isFinish = 0;
+        var manPos;
+        var maps = [
+[0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 2, 0, 2, 3, 1, 1, 3, 0, 2, 5, 1, 1, 1, 1, 1, 1, 1, 2, 1, 0, 0, 0, 0, 0, 1, 3, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+[0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 5, 1, 0, 0, 1, 0, 0, 2, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 3, 1, 1, 0, 1, 0, 0, 2, 3, 1, 1, 0, 2, 0, 0, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+[0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 5, 2, 1, 0, 0, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 1, 0, 2, 0, 1, 0, 0, 1, 3, 2, 0, 0, 1, 0, 0, 1, 3, 3, 4, 3, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0],
+[1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 5, 1, 0, 0, 1, 0, 2, 2, 1, 1, 1, 1, 1, 0, 2, 0, 3, 0, 0, 1, 1, 1, 0, 1, 3, 1, 0, 1, 1, 3, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+[1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 3, 1, 1, 1, 0, 1, 0, 2, 3, 3, 0, 1, 0, 1, 0, 0, 1, 1, 2, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 2, 0, 0, 0, 5, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0],
+[0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 3, 3, 1, 0, 0, 0, 1, 1, 0, 3, 1, 1, 0, 0, 1, 0, 0, 2, 3, 1, 0, 1, 1, 0, 2, 0, 0, 1, 1, 1, 0, 0, 1, 2, 2, 0, 1, 1, 0, 0, 5, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+[0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 5, 1, 0, 0, 1, 1, 4, 0, 0, 1, 0, 0, 1, 0, 4, 0, 1, 1, 0, 0, 1, 0, 4, 0, 1, 0, 0, 0, 1, 0, 3, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0],
+[0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 3, 3, 0, 3, 1, 0, 0, 1, 3, 2, 0, 3, 1, 0, 1, 1, 2, 0, 0, 1, 1, 1, 1, 0, 2, 0, 0, 2, 0, 1, 1, 0, 1, 1, 2, 1, 0, 1, 1, 0, 0, 5, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+[0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 3, 0, 3, 2, 1, 1, 1, 0, 0, 2, 5, 0, 0, 1, 1, 1, 1, 1, 4, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1],
+[1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 5, 0, 0, 2, 0, 1, 1, 1, 2, 1, 1, 3, 3, 1, 0, 1, 0, 3, 1, 0, 0, 1, 0, 1, 2, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0],
+[0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 3, 0, 1, 2, 2, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 3, 0, 0, 2, 1, 1, 0, 1, 1, 3, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0],
+[0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 5, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 3, 0, 1, 1, 1, 1, 1, 0, 2, 2, 3, 0, 3, 1, 1, 0, 0, 2, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0],
+[0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 2, 3, 1, 0, 0, 1, 0, 0, 3, 0, 1, 1, 1, 1, 0, 0, 1, 3, 1, 1, 0, 2, 0, 0, 2, 0, 1, 1, 0, 0, 0, 1, 5, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+[1, 1, 1, 1, 0, 0, 0, 0, 1, 3, 0, 1, 0, 0, 0, 0, 1, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 3, 2, 0, 5, 0, 1, 1, 0, 3, 2, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1],
+[1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 3, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 2, 2, 3, 0, 1, 1, 3, 0, 0, 1, 1, 0, 1, 1, 5, 2, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1],
+[0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 5, 0, 1, 1, 1, 1, 1, 0, 2, 4, 0, 4, 0, 1, 1, 0, 0, 4, 0, 1, 0, 1, 1, 0, 0, 4, 0, 0, 0, 1, 1, 0, 1, 4, 3, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+        var sts = ["empty", "wall", "box", "target", "boxonplace", "man", "manonplace"];
+        var backData = new Array();
+
+        function Init() {
+            CloneToMap(level);
+            step = 0;
+            isFinish = 0;
+            FillGame();
+        }
+
+        function CloneToMap(l) {
+            for (var i = 0; i < maps[level].length; i++) {
+                map[i] = maps[level][i];
+            }
+        }
+
+        function FillGame() {
+            var gameStr = "";
+            var count = 0;
+            for (var i = 0; i < map.length; i++) {
+                var className = sts[map[i]];
+                gameStr += "<div class='" + className + "'></div>";
+                if (map[i] > 4) {
+                    manPos = i;
+                }
+                if (map[i] == 3 || map[i] == 6) {
+                    count++;
+                }
+            }
+            $("step").innerText = step + " 步";
+            if (count == 0) {
+                isFinish = 1;
+                $("step").innerText = step + " 步完成！";
+            }
+            $("work").innerHTML = gameStr;
+            $("level").innerText = (level + 1);
+        }
+
+        function $(id) {
+            return document.getElementById(id);
+        }
+
+        function KeyDown() {
+            if (event.keyCode == 8) {//后退
+                BackStep();
+            }
+            else if (event.keyCode == 13) {
+                if (isFinish == 1 && level < 15) {
+                    level++;
+                }
+                Init();
+            }
+            else if (event.keyCode > 36 && event.keyCode < 41 && isFinish == 0) {
+                var dir = event.keyCode - 36;
+                var v = dir == 1 ? -1 : dir == 2 ? -8 : dir == 3 ? 1 : 8;
+                MoveTo(v);
+            }
+        }
+
+        function MoveTo(v) {
+            var mapTemp = new Array();
+            for (var i = 0; i < map.length; i++) {
+                mapTemp[i] = map[i];
+            }
+            backData[step] = mapTemp;
+            if (map[manPos + v] == 1) {
+                backData.pop();
+                return;
+            }
+            if (map[manPos + v] == 2 || map[manPos + v] == 4) {
+                if (map[manPos + 2 * v] == 1 || map[manPos + 2 * v] == 2 || map[manPos + 2 * v] == 4) {
+                    backData.pop();
+                    return;
+                }
+                else {
+                    map[manPos] = map[manPos] == 6 ? 3 : 0;
+                    map[manPos + v] = map[manPos + v] == 4 ? 6 : 5;
+                    if (map[manPos + 2 * v] == 3) map[manPos + 2 * v] = 4;
+                    if (map[manPos + 2 * v] == 0) map[manPos + 2 * v] = 2;
+                }
+            }
+            else if (map[manPos + v] == 0 || map[manPos + v] == 3) {
+                map[manPos] = map[manPos] == 6 ? 3 : 0;
+                map[manPos + v] = map[manPos + v] == 3 ? 6 : 5;
+            }
+            step++;
+            FillGame();
+        }
+
+        function BackStep() {
+            if (step == 0 || isFinish == 1)
+                return;
+            var back = backData[step - 1];
+            for (var i = 0; i < map.length; i++) {
+                map[i] = back[i];
+            }
+            backData.pop();
+            step--;
+            FillGame();
+        }
+
+        document.onkeydown = KeyDown;
+    </script>
+</head>
+<body onload="Init()">
+    <div id="main">
+        <div id="work">
+        </div>
+        <div id="right">
+            <div id="Div1">
+                关卡： <span id="level">1</span>
+            </div>
+            <div id="Div5">
+                步数： <span id="step">0</span>
+            </div>
+            <div onclick="Init()">
+                <b>重置游戏</b>
+            </div>
+            <div>
+                <b>玩法说明:</b><br />
+                按上下左右键移动，把所有的箱子都推到画红圈的地方就赢了。赢了以后按Enter键进入下一关。
+            </div>
+        </div>
+    </div>
+</body>
+</html>

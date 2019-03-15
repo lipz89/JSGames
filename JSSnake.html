@@ -1,0 +1,233 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+    <title>贪吃蛇</title>
+    <style type="text/css">
+        #main {
+            margin: 30px auto;
+            width: 610px;
+        }
+
+        #work {
+            float: left;
+            border: 2px solid #a82;
+            width: 400px;
+            height: 400px;
+            background: #900;
+        }
+
+            #work div {
+                width: 20px;
+                height: 20px;
+                margin: 0px;
+                float: left;
+            }
+
+        .dir2 {
+            background: url(snake/up.png);
+        }
+
+        .dir4 {
+            background: url(snake/down.png);
+        }
+
+        .dir1 {
+            background: url(snake/left.png);
+        }
+
+        .dir3 {
+            background: url(snake/right.png);
+        }
+
+        .body {
+            background: url(snake/body.png);
+        }
+
+        .w2 {
+            background: url(snake/wup.png);
+        }
+
+        .w4 {
+            background: url(snake/wdown.png);
+        }
+
+        .w1 {
+            background: url(snake/wleft.png);
+        }
+
+        .w3 {
+            background: url(snake/wright.png);
+        }
+
+        .nosnake {
+            background: url(snake/back.png);
+        }
+
+        .dou {
+            background: url(snake/food.png);
+        }
+
+        #right {
+            float: right;
+            height: 400px;
+            border: 2px solid #a82;
+            padding: 0 10px;
+        }
+
+            #right div {
+                margin: 20px 0;
+                width: 170px;
+                border-bottom: 1px solid #93c;
+                cursor: pointer;
+                font-size: 12px;
+                padding: 6px 0px 0px 2px;
+            }
+
+        #aler {
+            color: #f00;
+        }
+    </style>
+    <script type="text/javascript">
+        var ar; //蛇身数组
+        var dir; //方向，1左；2上；3右；4下
+        var state; //状态，0停止；1游戏进行中；2暂停
+        var dou; //豆的位置
+        var d; //方块数目
+        var score = 0; //分数
+        var level = 1; //关卡
+        var leng = 20; //方格长宽
+        var delay = 300;
+        var headClass;
+        //游戏数据初始化
+        function init() {
+            dir = 3;
+            headClass = "dir" + dir;
+            state = 2;
+            d = leng * leng;
+            ar = new Array(0, 1, 2);
+            score = 0;
+            creat();
+            drawGame();
+        }
+
+        function drawGame() {
+            var h = "";
+            for (var j = 0; j < d; j++) {
+                h += "<div class='" + (j == dou ? "dou" : check(j)) + "'></div>";
+            }
+            document.getElementById("work").innerHTML = h;
+        }
+        //贪吃蛇移动
+        function move() {
+            var h = "";
+            var temp;
+            if (dir == 3) temp = ar[ar.length - 1] + 1; //有
+            if (dir == 4) temp = ar[ar.length - 1] + leng; //下
+            if (dir == 1) temp = ar[ar.length - 1] - 1; //左
+            if (dir == 2) temp = ar[ar.length - 1] - leng; //上
+            headClass = "dir" + dir;
+            //游戏失败
+            if (dir == 3 && temp % leng == 0 || dir == 1 && temp % leng == leng - 1 || check(temp) != "nosnake" || temp > d || temp < 0)
+                state = 0;
+            if (state == 1) {
+                ar.push(temp);
+                if (temp == dou) {
+                    //吃到豆豆
+                    score += 10;
+                    if (level < 10) {
+                        level = Math.floor(score / 500) + 1;
+                        delay = 330 - level * 25;
+                        if (score % 500 == 0) {
+                            var arlen = ar.length - 3;
+                            for (var i = 0; i < arlen; i++)
+                                ar.shift();
+                        }
+                    }
+                    creat();
+                }
+                    //没吃到豆豆
+                else {
+                    ar.shift();
+                }
+                //重新绘制地图
+                drawGame();
+
+                setTimeout("move()", delay);
+            }
+        }
+        //检查K是否在蛇身上
+        function check(k) {
+            var str = "nosnake";
+            for (var i = 0; i < ar.length; i++)
+                if (k == ar[i]) {
+                    if (i == ar.length - 1) {
+                        str = headClass;
+                        if (i < ar.length - 1) {
+                            var c = ar[i + 1] - ar[i];
+                            if (c == 1)
+                                str += "3";
+                            else if (c == -1)
+                                str += "1";
+                            else if (c == leng)
+                                str += "4";
+                            else if (c == -leng)
+                                str += "2";
+                        }
+                    }
+                    else
+                        return "body";
+                }
+            return str;
+        }
+        //生成新的豆豆
+        function creat() {
+            do {
+                dou = parseInt(Math.random() * d);
+            } while (check(dou) != "nosnake");
+            document.getElementById("score").innerText = score;
+            document.getElementById("level").innerText = level;
+        }
+        //键盘事件，回车暂停，方向键改变防线
+        function changeDir() {
+            if (event.keyCode == 113)
+                init();
+            if (event.keyCode == 13 && state != 0)
+                state = 2;
+            else if (event.keyCode > 36 && event.keyCode < 41) {
+                var dirr = event.keyCode - 36;
+                if (Math.abs(dirr % 4 - dir % 4) != 2) {
+                    dir = dirr;
+                    if (state == 2) {
+                        state = 1;
+                        move();
+                    }
+                }
+            }
+        }
+
+        document.onkeydown = changeDir;
+    </script>
+</head>
+<body onload="init()">
+    <div id="main">
+        <div id="work">
+        </div>
+        <div id="right">
+            <div id="info">
+                得分： <span id="score">0</span>
+            </div>
+            <div id="Div1">
+                关卡： <span id="level">1</span>
+            </div>
+            <div onclick="init()">
+                <b>新游戏</b>
+            </div>
+            <div>
+                <b>玩法说明:</b><br />
+                按上下左右键改变贪吃蛇的方向，吃到一个蘑菇得10分。
+            </div>
+        </div>
+    </div>
+</body>
+</html>

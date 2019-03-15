@@ -1,0 +1,525 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+    <title>八宝盒</title>
+    <script src="common.js"></script>
+    <script src="bbh/maps.js"></script>
+    <style>
+        body {
+            width: 444px;
+        }
+
+        .body {
+            width: 444px;
+            background: #fff;
+            margin: 30px;
+            text-align: center;
+        }
+
+        .area {
+            display: inline-block;
+            position: relative;
+            width: 384px;
+            height: 384px;
+            border: 3px #444 solid;
+            border-right-color: #888;
+            border-bottom-color: #888;
+        }
+
+        .finish {
+            display: none;
+            width: 384px;
+            height: 384px;
+            box-sizing: border-box;
+            padding-top: 128px;
+            position: absolute;
+            background: transparent;
+            color: #000;
+            font-weight: bolder;
+            font-size: 100px;
+            z-index: 10;
+        }
+
+        .door {
+            position: absolute;
+            width: 68px;
+            height: 3px;
+            top: 384px;
+            left: 190px;
+            box-sizing: border-box;
+            background: #fff;
+            border-left: 2px solid #666;
+            border-right: 2px solid #aaa;
+        }
+
+        .item {
+            display: inline-block;
+            position: absolute;
+            box-sizing: border-box;
+            border-width: 2px;
+            border-style: solid;
+            color: #fff;
+            font-weight: bolder;
+            line-height: 60px;
+        }
+
+        .tgt {
+            background: #0ff !important;
+            border-color: #8ff !important;
+            border-right-color: #088 !important;
+            border-bottom-color: #088 !important;
+        }
+
+        .v2 {
+            width: 64px;
+            height: 128px;
+            background: #F00;
+            border-color: #f88;
+            border-right-color: #800;
+            border-bottom-color: #800;
+            line-height: 124px;
+        }
+
+        .v3 {
+            width: 64px;
+            height: 192px;
+            background: #f0f;
+            border-color: #f8f;
+            border-right-color: #808;
+            border-bottom-color: #808;
+            line-height: 188px;
+        }
+
+        .h2 {
+            width: 128px;
+            height: 64px;
+            background: #00f;
+            border-color: #88f;
+            border-right-color: #008;
+            border-bottom-color: #008;
+        }
+
+        .h3 {
+            width: 192px;
+            height: 64px;
+            background: #080;
+            border-color: #484;
+            border-right-color: #040;
+            border-bottom-color: #040;
+        }
+
+        .ctol {
+            width: 384px;
+            margin: 30px;
+            text-align: center;
+        }
+
+        .info {
+            margin: 60px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="body">
+        <div class="ctol">
+            <div>
+                <button id="prev">上一关</button>
+                <button id="next">下一关</button>
+                <button id="reset">重置本关</button>
+                <div>当前第 <span id="dlv">1</span>/<span id="lvcount"></span> 关 <span id="last"></span></div>
+            </div>
+        </div>
+        <div id="finish" class="finish">完成</div>
+        <div id="area" class="area"></div>
+        <div id="info" class="info"></div>
+    </div>
+
+    <script type="text/javascript" charset="utf-8">
+
+        var ua = navigator.userAgent;
+        var isIpad = !!ua.match(/(iPad).*OS\s([\d_]+)/),
+            isIphone = !isIpad && !!ua.match(/(iPhone\sOS)\s([\d_]+)/),
+            isAndroid = !!ua.match(/(Android)\s+([\d.]+)/),
+            isMobile = isIphone || isAndroid;
+
+        var clss = { 0: "h2", 1: "h3", 2: "v2", 3: "v3" };
+        var w = h = 6;
+        var cw = ch = 64;
+        var level = 0;
+        var door = { x: 3, y: 6 };
+        $("lvcount").innerHTML = maps.length;
+        var getPos = function (type, x, y) {
+            var p1 = y * w + x;
+            var arr = [p1];
+            if (type === 0) {
+                arr.push(p1 + 1);
+            } else if (type === 1) {
+                arr.push(p1 + 1);
+                arr.push(p1 + 2);
+            } else if (type === 2) {
+                arr.push(p1 + w);
+            } else if (type === 3) {
+                arr.push(p1 + w);
+                arr.push(p1 + w + w);
+            }
+            return arr;
+        }
+
+        //$("showindex").onclick = showindex;
+
+        $("prev").onclick = function () {
+            level--;
+            if (level < 0) {
+                level = maps.length - 1;
+            }
+            var map = maps.get(level);
+            game = init(map);
+        }
+
+        $("next").onclick = function () {
+            level++;
+            if (level >= maps.length) {
+                level = 0;
+            }
+            var map = maps.get(level);
+            game = init(map);
+        }
+
+        $("reset").onclick = function () {
+            var map = maps.get(level);
+            game = init(map);
+        }
+
+        function mouseDown() {
+            if (event.button <= 1 && !game.state) {
+                game.mover = event.target;
+                game.moverPos = {
+                    x: parseInt(event.target.style.left),
+                    y: parseInt(event.target.style.top)
+                };
+                game.startPos = {
+                    x: event.x,
+                    y: event.y
+                };
+            }
+        }
+
+        function mouseUp() {
+            if (game.mover) {
+                if (game.hasMove.top + game.hasMove.left) {
+                    logmove(game.hasMove, game.mover.id);
+                    game.count++;
+                }
+                game.hasMove = { top: 0, left: 0 };
+                game.mover = null;
+            }
+        }
+
+        function mouseMove() {
+            if (game.mover) {
+                game.move(event.x, event.y);
+            }
+        }
+
+        function log(txt) {
+            $("info").innerHTML = txt + "<br/>" + $("info").innerHTML;
+        }
+
+        //function showindex() {
+        //    var h = $("index").innerHTML;
+        //    if (h) {
+        //        $("index").innerHTML = "";
+        //        $("index").style.display = "none";
+        //    } else {
+        //        var html = "";
+        //        var hs = [];
+        //        for (var i = 0; i < game.pos.length; i++) {
+        //            var p = game.pos[i];
+        //            var t = p;
+        //            if (hs.indexOf(p) >= 0) {
+        //                t = t + "*";
+        //            }
+        //            hs.push(p);
+        //            var x = parseInt(p % w) * cw;
+        //            var y = parseInt(p / w) * ch;
+        //            html += "<div style='left:" + x + "px;top:" + y + "px;'>" + t + "</div>";
+        //        }
+        //        $("index").innerHTML = html;
+        //        $("index").style.display = "inline-block";
+        //    }
+        //}
+
+        function logmove(m, n) {
+            if (m.top) {
+                if (m.top > 0) {
+                    log("移动：" + n + " 向下 " + m.top);
+                } else {
+                    log("移动：" + n + " 向上 " + Math.abs(m.top));
+                }
+            } else if (m.left) {
+                if (m.left > 0) {
+                    log("移动：" + n + " 向右 " + m.left);
+                } else {
+                    log("移动：" + n + " 向左 " + Math.abs(m.left));
+                }
+            }
+            if (game.state === 1) {
+                log("完成游戏,一共用了" + game.count + "步");
+            }
+        }
+
+        function hasClass(ele, cls) {
+            return (" " + ele.className + " ").indexOf(" " + cls + " ") >= 0;
+        }
+
+        function getDm(dm, cwh) {
+            if (dm > cwh / 2) {
+                return 1;
+            } else if (dm < -cwh / 2) {
+                return -1;
+            }
+            return 0;
+        }
+
+        function canMoveX(mp, dmx, isTgt, ww) {
+            if (isTgt && mp.y === door.y) {
+                if (dmx < 0 && mp.x + dmx === door.x) {
+                    return { r: true, x: mp.x + dmx, f: true };
+                }
+                if (dmx > 0 && mp.x + dmx + ww - 1 === door.x) {
+                    return { r: true, x: mp.x + dmx, f: true };
+                }
+            }
+
+            var nx = dmx + mp.x;
+            if (dmx > 0) {
+                nx += ww - 1;
+            }
+            if (nx < 0 || nx >= w) {
+                return { r: false };
+            }
+            var npos = mp.y * w + nx;
+            var index = game.pos.indexOf(npos);
+            if (index >= 0) {
+                return { r: false };
+            }
+            //log(npos + " - " + index + " > " + game.pos.join());
+            return { r: true, x: dmx + mp.x };
+        }
+        function canMoveY(mp, dmy, isTgt, hh) {
+            if (isTgt && mp.x === door.x) {
+                if (dmy < 0 && mp.y + dmy === door.y) {
+                    return { r: true, y: mp.y + dmy, f: true };
+                }
+                if (dmy > 0 && mp.y + dmy + hh - 1 === door.y) {
+                    return { r: true, y: mp.y + dmy, f: true };
+                }
+            }
+
+            var ny = dmy + mp.y;
+            if (dmy > 0) {
+                ny += hh - 1;
+            }
+            if (ny < 0 || ny >= h) {
+                return { r: false };
+            }
+            var npos = ny * w + mp.x;
+            var index = game.pos.indexOf(npos);
+            if (index >= 0) {
+                return { r: false };
+            }
+            //log(npos + " - " + index + " > " + game.pos.join());
+            return { r: true, y: dmy + mp.y };
+        }
+
+        var init = function (map) {
+            $("dlv").innerHTML = level + 1;
+            $("finish").style.display = "none";
+            var last = lvinfo.records[level];
+            if (last && last.step) {
+                $("last").innerHTML = "最佳步数：" + last.step;
+            }else{
+                $("last").innerHTML = "";
+            }
+            var items = map.split(",");
+            var html = "<div class='door'></div>";
+            var pos = [];
+            var eles = {};
+            for (var i = 0; i < items.length; i++) {
+                var desc = items[i];
+                var type = desc[0] * 1;
+                var x = desc[1] * 1;
+                var y = desc[2] * 1;
+                var ps = getPos(type, x, y);
+                pos = pos.concat(ps);
+                eles[i] = { i: i, d: desc };
+                var htm = "<div id='" + i + "' class='item " + clss[type];
+                if (i === 0) {
+                    htm += " tgt";
+                }
+                var left = x * cw + "px";
+                var top = y * cw + "px";
+                htm += "' style='left: " + left + "; top: " + top + ";'>" + (i || "") + "</div>";
+                html += htm;
+            }
+            var game = { map: map, eles: eles, pos: pos, count: 1 };
+            $("area").innerHTML = html;
+            if (isMobile) {
+                for (var i = 0; i < items.length; i++) {
+                    $(i).addEventListener('touchstart', function (event) {
+                        event.preventDefault(); // 阻止浏览器默认事件，重要
+                        if (!game.mover && !game.state) {
+                            // 如果这个元素的位置内只有一个手指的话
+                            if (event.targetTouches.length === 1) {
+                                event.preventDefault(); // 阻止浏览器默认事件，重要
+                                var touch = event.targetTouches[0];
+                                game.mover = event.target;
+                                game.moverPos = {
+                                    x: parseInt(event.target.style.left),
+                                    y: parseInt(event.target.style.top)
+                                };
+                                game.startPos = {
+                                    x: touch.pageX,
+                                    y: touch.pageY
+                                };
+                                //log("开始：" + game.mover.id);
+                            }
+                        }
+                    }, false);
+                    $(i).addEventListener('touchmove', function (event) {
+                        event.preventDefault(); // 阻止浏览器默认事件，重要
+                        if (game.mover && game.mover === event.target) {
+                            // 如果这个元素的位置内只有一个手指的话
+                            if (event.targetTouches.length === 1) {
+                                event.preventDefault(); // 阻止浏览器默认事件，重要
+                                var touch = event.targetTouches[0];
+                                game.move(touch.pageX, touch.pageY);
+                            }
+                        }
+                    }, false);
+                    $(i).addEventListener('touchend', function (event) {
+                        event.preventDefault(); // 阻止浏览器默认事件，重要
+                        if (game.mover && game.mover === event.target) {
+                            if (game.hasMove) {
+                                logmove(game.hasMove, game.mover.id);
+                                game.count++;
+                            }
+                            game.hasMove = { top: 0, left: 0 };
+                            game.mover = null;
+                        }
+                    }, false);
+                }
+            } else {
+                document.body.onmouseup = mouseUp;
+                //$("area").onmouseup = mouseUp;
+                $("area").onmouseleave = mouseUp;
+                $("area").onmousemove = mouseMove;
+                for (var i = 0; i < items.length; i++) {
+                    //$(i).onmousemove = mouseMove;
+                    $(i).onmousedown = mouseDown;
+                    //$(i).onmouseup = mouseUp;
+                }
+            }
+
+            game.hasMove = { top: 0, left: 0 };
+
+            game.move = function (x, y) {
+                if (game.mover && !game.state && !game.moving) {
+                    game.moving = true;
+                    var id = game.mover.id;
+                    var isTgt = id === "0",
+                        isH2 = hasClass(game.mover, "h2"),
+                        isH3 = hasClass(game.mover, "h3"),
+                        isV2 = hasClass(game.mover, "v2"),
+                        isV3 = hasClass(game.mover, "v3");
+                    var mp = { x: game.moverPos.x / cw, y: game.moverPos.y / ch };
+                    var mpos = mp.y * w + mp.x;
+                    var index = game.pos.indexOf(mpos);
+                    if (index === -1) {
+                        game.moving = false;
+                        return;
+                    }
+                    if (isH2 || isH3) {
+                        var dx = x - game.startPos.x;
+                        var dmx = getDm(dx, cw);
+                        if (dmx) {
+                            var ww = isH2 ? 2 : 3;
+                            var rx = canMoveX(mp, dmx, isTgt, ww);
+                            if (rx.r) {
+                                //var tx = "", dtx = "";
+                                for (var jx = 0; jx < ww; jx++) {
+                                    var dinx = index + jx;
+                                    //tx += game.pos[dinx] + " ";
+                                    game.pos[dinx] += dmx;
+                                    //dtx += game.pos[dinx] + " ";
+                                }
+                                //log(tx + "  :   " + dtx + "   >>>" + dmx);
+                                game.moverPos.x = rx.x * cw;
+                                game.startPos.x += dmx * cw;
+                                game.mover.style.left = game.moverPos.x + "px";
+                                game.hasMove.left += dmx;
+                                if (rx.f) {
+                                    finishGame();
+                                }
+                            }
+                        }
+                    } else if (isV2 || isV3) {
+                        var dy = y - game.startPos.y;
+                        var dmy = getDm(dy, ch);
+                        if (dmy) {
+                            var hh = isV2 ? 2 : 3;
+                            var ry = canMoveY(mp, dmy, isTgt, hh);
+                            if (ry.r) {
+                                //var ty = "", dty = "";
+                                for (var jy = 0; jy < hh; jy++) {
+                                    var diny = index + jy;
+                                    //ty += game.pos[diny] + " ";
+                                    game.pos[diny] += dmy * w;
+                                    //dty += game.pos[diny] + " ";
+                                }
+                                //log(ty + "  :   " + dty+"   >>>"+dmy);
+                                game.moverPos.y = ry.y * ch;
+                                game.startPos.y += dmy * ch;
+                                game.mover.style.top = game.moverPos.y + "px";
+                                game.hasMove.top += dmy;
+                                if (ry.f) {
+                                    finishGame();
+                                }
+                            }
+                        }
+                    }
+                    game.moving = false;
+                }
+            }
+            $("info").innerHTML = "";
+            return game;
+        }
+
+        function finishGame() {
+            game.state = 1;
+            var last = lvinfo.records[level];
+            if (!last) {
+                last = { lv: level, step: game.count };
+            } else if (last.step > game.count) {
+                last.step = game.count;
+            }
+            lvinfo.records[level] = last;
+            store.set("info", lvinfo);
+            $("finish").style.display = "inline-block";
+        }
+
+        var lvinfo = store.get("info") || { records: {} };
+        for (var i = 0; i < maps.length; i++) {
+            if (!(i in lvinfo.records)) {
+                level = i;
+                break;
+            }
+        }
+        var map = maps.get(level);
+        var game = init(map);
+    </script>
+</body>
+</html>

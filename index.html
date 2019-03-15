@@ -1,0 +1,43 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+    <title>游戏目录</title>
+    <script src="menu.js"></script>
+    <style>
+        .body {
+            background: #fff;
+            padding: 30px;
+            font-size: 20px;
+            font-family: "黑体";
+        }
+
+        .item {
+            display: block;
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-decoration: none;
+            margin: 10px;
+            background: bisque;
+            color: darkred;
+        }
+    </style>
+</head>
+<body>
+    <div class="body" id="body">
+    </div>
+    <script type="text/javascript">
+        var $ = function (id) {
+            return document.getElementById(id);
+        }
+        var games = pages.gamePages;
+        var html = "", fc, bc;
+        for (var i = 0; i < games.length; i++) {
+            var htm = '<a class="item" href="' + games[i].file + '">' + games[i].name + '</a>';
+            html += htm;
+        }
+        $("body").innerHTML = html;
+    </script>
+</body>
+</html>

@@ -1,0 +1,430 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+    <meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+    <title>扫雷</title>
+    <style type="text/css">
+        .td
+        {
+            background-image: url(mine/mine1.png);
+        }
+        .over
+        {
+            background-image: url(mine/mine2.png);
+        }
+        .nom
+        {
+            font-size: 12px;
+            font-weight: bold;
+            background-image: url(mine/mine2.png);
+        }
+        .tg
+        {
+            background-image: url(mine/tag.png);
+        }
+        .tb
+        {
+            background-image: url(mine/que.png);
+        }
+        .mine
+        {
+            background-image: url(mine/mine.png);
+        }
+        .error
+        {
+            background-image: url(mine/error.png);
+        }
+        .nomine
+        {
+            background-image: url(mine/nomine.png);
+        }
+        .count1
+        {
+            color: #00f;
+        }
+        .count2
+        {
+            color: #6f0;
+        }
+        .count3
+        {
+            color: #f00;
+        }
+        .count4
+        {
+            color: #36f;
+        }
+        .count5
+        {
+            color: #c0f;
+        }
+        .count6
+        {
+            color: #f60;
+        }
+        .count7
+        {
+            color: #9ff;
+        }
+        .count8
+        {
+            color: #09f;
+        }
+        #work div
+        {
+            width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            float: left;
+        }
+        #main
+        {
+            padding: 5px;
+            margin: 30px auto;
+            background: #bbb;
+            border-right: 2px solid #666;
+            border-bottom: 2px solid #666;
+            border-top: 2px solid #eee;
+            border-left: 2px solid #eee;
+            cursor: pointer;
+        }
+        #work
+        {
+            font-size: 12px;
+            border-top: 2px solid #666;
+            border-left: 2px solid #666;
+            border-right: 2px solid #eee;
+            border-bottom: 2px solid #eee;
+        }
+        #top
+        {
+            border-top: 2px solid #666;
+            border-left: 2px solid #666;
+            border-right: 2px solid #eee;
+            border-bottom: 2px solid #eee;
+            height: 25px;
+            padding: 3px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        #btn
+        {
+            width: 20px;
+            height: 20px;
+            float: left;
+        }
+        #left
+        {
+            text-align: left;
+            width: 24px;
+            height: 16px;
+            margin: 2px 0;
+            float: left;
+        }
+        #right
+        {
+            text-align: right;
+            width: 24px;
+            height: 16px;
+            margin: 2px 0;
+            float: right;
+        }
+        .face0
+        {
+            background-image: url(mine/face0.png);
+        }
+        .face1
+        {
+            background-image: url(mine/face1.png);
+        }
+        .face2
+        {
+            background-image: url(mine/face2.png);
+        }
+        .face3
+        {
+            background-image: url(mine/face3.png);
+        }
+        #top div
+        {
+            line-height: 16px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            border-right: 2px solid #666;
+            border-bottom: 2px solid #666;
+            border-top: 2px solid #eee;
+            border-left: 2px solid #eee;
+            color: #f00;
+        }
+    </style>
+</head>
+<body onload="InitGame()">
+    <div id="main">
+        <div id="top">
+            <div id="left">
+                <span id="leave">10</span></div>
+            <div id="btn" class="face0" onclick="InitGame()">
+            </div>
+            <div id="right">
+                <span id="time">0</span></div>
+        </div>
+        <div id="work">
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    var arr;
+    var arrt;
+    var level = 0;
+    var width = 10;
+    var height = 10;
+    var fin;
+    var num;
+    var nomine;
+    var state = -1;
+    var timer;
+    var timecount = 0;
+    var isDown = 0;
+
+    function InitGame() {
+        //初始化游戏数据
+        clearInterval(timer);
+        width = height = 10 + level * 2;
+        SetMine();
+        fin = num;
+        state = -1;
+        nomine = 0;
+        timecount = 0;
+        var wid = width * 16;
+        var hei = height * 16;
+        //绘制表格
+        var a = "";
+        for (var i = 0; i < arr.length; i++) {
+            a += "<div class='td' id=" + i + " onmousedown=MouseDown(this) onmouseup=MouseUp(this) onmouseover=MouseOver(this) onmouseout=MouseOut(this) ></div>";
+        }
+        $("work").innerHTML = a;
+        $("work").style.width = wid+"px";
+        $("work").style.height = hei+"px";
+        $("main").style.width = wid + 4+"px";
+        $("main").style.height = hei + 44+"px";
+        $("btn").style.marginLeft = wid / 2 - 44+"px";
+        $("btn").className = "face0";
+        $("time").innerText = timecount;
+        $("leave").innerText = fin;
+    }
+
+    function Test() {
+        var str = "";
+        for (var i = 0; i < 11; i++) {
+            var n = 10 + i * 2;
+            var nn = n * n;
+            str += n + ":--" + nn + "--" + Math.floor(nn / Math.floor(20 - i)) * 2 + "\n";
+        }
+        alert(str);
+    }
+
+    function SetMine() {
+        num = Math.floor(width * height / Math.floor(20 - level)) * 2;
+        arrt = new Array(num);
+        arr = new Array(width * height);
+        for (var i = 0; i < arrt.length; i++) {
+            do {
+                arrt[i] = Math.floor(Math.random() * width * height);
+            } while (CheckMine(i));
+        }
+        for (var i = 0; i < arr.length; i++) {
+            arr[i] = 0;
+        }
+        for (var i = 0; i < arrt.length; i++) {
+            arr[arrt[i]] = 1;
+        }
+    }
+
+    function CheckMine(j) {
+        for (var i = 0; i < j; i++) {
+            if (arrt[i] == arrt[j])
+                return true;
+        }
+        return false;
+    }
+
+    function Tick() {
+        $("time").innerText = ++timecount;
+    }
+
+    function MouseDown(t) {
+        if (state > 0)
+            return;
+        $("btn").className = "face3";
+        if (state < 0) {
+            state = 0;
+            timer = setInterval(Tick, 1000);
+        }
+        if (event.button <= 1) {
+            isDown = 1;
+            if (t.className == "td")
+                t.className = "over"
+        }
+        else if (event.button == 2) {
+            RightClick(t);
+        }
+        $("leave").innerText = fin;
+    }
+
+    function MouseUp(t) {
+        if (state != 0)
+            return;
+        if (event.button <= 1) {
+            LeftClick(t);
+            isDown = 0;
+        }
+        else
+            $("btn").className = "face0";
+    }
+
+    function LeftClick(t) {
+        //单击事件
+        if (t.className == "tg" || t.className == "mine" || t.className == "tb")
+            return;
+        var xy = parseInt(t.id);
+        if (arr[xy] == 1) {
+            t.className = "error";
+            state = 1;
+            ShowAllMine(xy);
+            clearInterval(timer);
+            $("btn").className = "face1";
+        }
+        else {
+            var x = parseInt(xy / width);
+            var y = xy % width;
+            CheckCount(x, y);
+            CheckWin();
+        }
+    }
+
+    function RightClick(t) {
+        //右键单击，标记或取消标记地雷
+        if (t.className == "over" || t.className == "td") {
+            t.className = "tg";
+            fin--;
+        }
+        else if (t.className == "tg") {
+            t.className = "tb";
+            fin++;
+        }
+        else if (t.className == "tb") {
+            t.className = "td";
+        }
+    }
+
+    function CheckWin() {
+        if (nomine + num == width * height) {
+            clearInterval(timer);
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i] == 1)
+                    $(i).className = "tg";
+            }
+            fin = 0;
+            state = 2;
+        }
+        $("leave").innerText = fin;
+        $("btn").className = "face" + state;
+        if (state == 2 && confirm("恭喜胜利！要进入下一关吗？")) {
+            if (level < 10)
+                level++;
+            InitGame();
+        }
+    }
+
+    function ShowAllMine(xy) {
+        for (var i = 0; i < arr.length; i++) {
+            var t = $(i);
+            if (xy != i && arr[i] == 1)
+                t.className = "mine";
+            else if (t.className == "tg" && arr[i] == 0)
+                t.className = "nomine";
+        }
+    }
+
+    function CheckCount(x, y) {
+        //检查当前区域
+        var count = 0;
+        var t = $(x * width + y);
+        if (t.className != "over" && t.className != "td" && t.className != "tb")
+            return;
+        if (t.className != "nom") {
+            if (x > 0 && y > 0)
+                count += arr[(x - 1) * width + (y - 1)];
+            if (x > 0)
+                count += arr[(x - 1) * width + y];
+            if (x > 0 && y < width - 1)
+                count += arr[(x - 1) * width + (y + 1)];
+            if (y > 0)
+                count += arr[x * width + (y - 1)];
+            if (y < width - 1)
+                count += arr[x * width + (y + 1)];
+            if (x < width - 1 && y > 0)
+                count += arr[(x + 1) * width + (y - 1)];
+            if (x < width - 1)
+                count += arr[(x + 1) * width + y];
+            if (x < width - 1 && y < width - 1)
+                count += arr[(x + 1) * width + (y + 1)];
+            nomine++;
+            t.className = "nom count" + count;
+            if (count > 0) {
+                t.innerText = count;
+            }
+            else {
+                if (x > 0 && y > 0)
+                    CheckCount(x - 1, y - 1);
+                if (x > 0)
+                    CheckCount(x - 1, y);
+                if (x > 0 && y < width - 1)
+                    CheckCount(x - 1, y + 1);
+                if (y > 0)
+                    CheckCount(x, y - 1);
+                if (y < width - 1)
+                    CheckCount(x, y + 1);
+                if (x < width - 1 && y > 0)
+                    CheckCount(x + 1, y - 1);
+                if (x < width - 1)
+                    CheckCount(x + 1, y);
+                if (x < width - 1 && y < width - 1)
+                    CheckCount(x + 1, y + 1);
+            }
+        }
+    }
+
+    function MouseOver(t) {
+        if (isDown && t.className == "td" && state <= 0)
+            t.className = "over";
+    }
+
+    function MouseOut(t) {
+        if (t.className == "over")
+            t.className = "td";
+    }
+
+    function KeyDown() {
+        //按F2开始新游戏
+        if (event.keyCode == 113)
+            InitGame();
+    }
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    function ReturnFalse() {
+        return false;
+    }
+
+    document.onkeydown = KeyDown;
+    document.onselectstart = ReturnFalse;
+    document.oncontextmenu = ReturnFalse;
+
+</script>
+</html>

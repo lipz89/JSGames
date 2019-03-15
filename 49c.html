@@ -1,0 +1,249 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>马踏棋盘画布版</title>
+    <script src="common.js"></script>
+    <style>
+        body {
+            text-align: center;
+            width: 500px;
+            margin: auto;
+        }
+
+        div.top {
+            text-align: center;
+            padding: 20px;
+        }
+
+        div.title {
+            font-size: 40px;
+        }
+
+        div.ctol {
+            font-size: 12px;
+        }
+
+        div.ctl {
+            top: 250px;
+            width: 500px;
+            background: #ccc;
+            margin: auto;
+            position: absolute;
+            padding: 20PX 0;
+            z-index: 10;
+            color: #fff;
+            font-size: 40px;
+            display: none;
+            -webkit-animation: flashfont 0.25s linear 0s infinite alternate;
+        }
+
+        @keyframes flashfont {
+            from {
+                color: red;
+            }
+
+            to {
+                color: blue;
+            }
+        }
+
+        @-webkit-keyframes flashfont {
+            from {
+                color: red;
+            }
+
+            to {
+                color: blue;
+            }
+        }
+    </style>
+</head>
+<body style='text-align:center'>
+    <div class="top">
+        <div class="title">马踏棋盘</div>
+        <div class="ctol">
+            按照象棋中马的走法走过棋盘中尽量多的格子
+            <br />
+            <button id="reset">重置本关</button>
+            <div>历史最好记录 <span id="last">0</span> 步</div>
+        </div>
+    </div>
+    <canvas id="area" width="491" height="491"></canvas>
+    <div id="ctl" class="ctl">
+        <label id="info"></label>
+        <div>
+            <button id="new">再来一局</button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function Game(w, h) {
+            this.width = w;
+            this.height = h;
+            this.init = function () {
+                this.start = 0;
+                do {
+                    this.start = parseInt(Math.random() * w * h);
+                } while (this.start % 2 === 1);
+                this.current = this.start;
+                this.paths = [this.start];
+            }
+            var move = [[-1, -2], [-2, -1], [-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2]];
+
+            this.getOptions = function () {
+                if (this.state) {
+                    return [];
+                }
+                var x = this.current % this.width;
+                var y = parseInt(this.current / this.width);
+                var rst = [];
+                var s = parseInt(Math.random() * move.length);
+                for (var i = 0; i < move.length; i++) {
+                    var index = (s + i) % move.length;
+                    var dx = x + move[index][0];
+                    var dy = y + move[index][1];
+                    if (dx >= 0 && dx < this.width && dy >= 0 && dy < this.height) {
+                        var p = dy * this.width + dx;
+                        if (this.paths.indexOf(p) < 0) {
+                            rst.push(p);
+                        }
+                    }
+                }
+                return rst;
+            }
+
+            this.canstep = function (a, b) {
+                var x = a % this.width;
+                var y = parseInt(a / this.width);
+                var tx = b % this.width;
+                var ty = parseInt(b / this.width);
+                var dx = Math.abs(x - tx);
+                var dy = Math.abs(y - ty);
+                return dx && dy && dx + dy === 3;
+            }
+
+            this.move = function (p) {
+                if (this.state || this.paths.indexOf(p) >= 0) {
+                    return false;
+                }
+                if (this.canstep(this.current, p)) {
+                    this.paths.push(p);
+                    this.current = p;
+                    if (this.paths.length === this.width * this.height) {
+                        if (this.canstep(this.current, this.start)) {
+                            this.state = 2;
+                        } else {
+                            this.state = 1;
+                        }
+                    } else if (!this.check()) {
+                        this.state = -1;
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            this.check = function () {
+                var opts = this.getOptions();
+                for (var i = 0; i < opts.length; i++) {
+                    if (this.paths.indexOf(opts[i]) < 0) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            this.reset = function () {
+                this.state = 0;
+                this.current = this.start;
+                this.paths = [this.start];
+            }
+
+            this.init();
+        }
+
+        var w = h = 7;
+        var cw = 70;
+        var game = new Game(w, h);
+        var area = $("area");
+        var ctx = area.getContext("2d");
+        ctx.lineWidth = 1;
+        var fill = function (x, y, color) {
+            ctx.fillStyle = color;
+            var rx = x * cw + 0.5;
+            var ry = y * cw + 0.5;
+            ctx.fillRect(rx + 1, ry + 1, cw - 2, cw - 2);
+        }
+        var paint = function () {
+            var lastSteps = store.get("horseLast49c");
+            if (lastSteps) {
+                $("last").innerHTML = lastSteps;
+            }
+            ctx.clearRect(0, 0, 491, 491);
+            var i;
+            for (i = 0; i <= w; i++) {
+                ctx.moveTo(i * cw + 0.5, 0);
+                ctx.lineTo(i * cw + 0.5, h * cw);
+                ctx.stroke();
+            }
+            for (i = 0; i <= h; i++) {
+                ctx.moveTo(0, i * cw + 0.5);
+                ctx.lineTo(w * cw, i * cw + 0.5);
+                ctx.stroke();
+            }
+
+            var sx = game.start % w;
+            var sy = parseInt(game.start / w);
+            fill(sx, sy, "#f60");
+
+            $("ctl").style.display = "none";
+        }
+        area.onclick = function (e) {
+            if (game.auting || game.state) {
+                return;
+            }
+            if (e.layerX % cw === 0 || e.layerY % cw === 0) {
+                return;
+            }
+            var x = parseInt(e.layerX / cw);
+            var y = parseInt(e.layerY / cw);
+            var last = game.current;
+            var lx = last % w;
+            var ly = parseInt(last / w);
+            var id = y * w + x;
+            if (game.move(id)) {
+                fill(lx, ly, "red");
+                if (!game.state) {
+                    fill(x, y, "#f60");
+                } else {
+                    fill(x, y, "red");
+                    if (game.state === 2) {
+                        $("info").innerHTML = "恭喜你找到了制胜秘诀";
+                        console.log(game.paths);
+                    } else if (game.state === 1) {
+                        $("info").innerHTML = "恭喜你，完美胜利";
+                    } else {
+                        $("info").innerHTML = "你只完成了" + game.paths.length + "步，还需加油";
+                    }
+                    $("ctl").style.display = "block";
+                    var lastSteps = store.get("horseLast49c") || 0;
+                    if (lastSteps < game.paths.length) {
+                        store.set("horseLast49c", game.paths.length);
+                    }
+                }
+            }
+        }
+
+        paint();
+
+        $("new").onclick = function (e) {
+            game.init();
+            paint();
+        }
+
+        $("reset").onclick = function (e) {
+            game.reset();
+            paint();
+        }
+    </script>
+</body>
+</html>

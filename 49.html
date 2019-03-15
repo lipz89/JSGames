@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>马踏棋盘</title>
+    <script src="common.js"></script>
+    <style>
+        body {
+            text-align: center;
+            width: 500px;
+            margin: auto;
+        }
+
+        div.area {
+            width: 490px;
+            height: 490px;
+            margin: auto;
+            text-align: left;
+            position: relative;
+            background: #fff;
+        }
+
+        div.item {
+            display: inline-block;
+            width: 71px;
+            height: 71px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            position: absolute;
+            text-align: center;
+            line-height: 66px;
+        }
+
+        div.top {
+            text-align: center;
+            padding: 20px;
+        }
+
+        div.title {
+            font-size: 40px;
+        }
+
+        div.desc {
+            font-size: 16px;
+        }
+
+        div.ctol {
+            font-size: 12px;
+        }
+
+        div.ctl {
+            top: 250px;
+            width: 500px;
+            background: #ccc;
+            margin: 20px auto;
+            position: absolute;
+            z-index: 10;
+            color: #fff;
+            font-size: 40px;
+            display: none;
+            -webkit-animation: flashfont 0.25s linear 0s infinite alternate;
+        }
+
+        div.path {
+            background: red;
+        }
+
+        div.current {
+            -webkit-animation: flash 0.25s linear 0s infinite alternate;
+        }
+
+        div.options {
+            background: #F99;
+        }
+
+        @keyframes flashfont {
+            from {
+                color: red;
+            }
+
+            to {
+                color: blue;
+            }
+        }
+
+        @keyframes flash {
+            from {
+                background: red;
+            }
+
+            to {
+                background: blue;
+            }
+        }
+
+        @-webkit-keyframes flashfont {
+            from {
+                color: red;
+            }
+
+            to {
+                color: blue;
+            }
+        }
+
+        @-webkit-keyframes flash {
+            from {
+                background: red;
+            }
+
+            to {
+                background: blue;
+            }
+        }
+    </style>
+</head>
+<body style='text-align:center'>
+    <div class="top">
+        <div class="title">马踏棋盘</div>
+        <div class="ctol">
+            <span id="desc">按照象棋中马的走法走过棋盘中尽量多的格子</span>
+            <br />
+            <button id="reset">重置本关</button>
+            <button id="auto">尝试自动</button>
+            <div>历史最好记录 <span id="last">0</span> 步</div>
+        </div>
+    </div>
+    <div id="area" class='area'>
+    </div>
+    <div id="ctl" class="ctl">
+        <label id="info"></label>
+        <div>
+            <button id="new">再来一次</button>
+        </div>
+    </div>
+    <script type="text/javascript">
+        function Game(w, h) {
+            this.width = w;
+            this.height = h;
+            this.init = function () {
+                this.start = 0;
+                do {
+                    this.start = parseInt(Math.random() * w * h);
+                } while (this.start % 2 === 1);
+                this.paths = [this.start];
+                this.current = this.start;
+            }
+            var move = [[-1, -2], [-2, -1], [-2, 1], [-1, 2], [1, 2], [2, 1], [2, -1], [1, -2]];
+
+            this.getOptions = function () {
+                if (this.state) {
+                    return [];
+                }
+                var x = this.current % this.width;
+                var y = parseInt(this.current / this.width);
+                var rst = [];
+                var s = parseInt(Math.random() * move.length);
+                for (var i = 0; i < move.length; i++) {
+                    var index = (s + i) % move.length;
+                    var dx = x + move[index][0];
+                    var dy = y + move[index][1];
+                    if (dx >= 0 && dx < this.width && dy >= 0 && dy < this.height) {
+                        var p = dy * this.width + dx;
+                        if (this.paths.indexOf(p) < 0) {
+                            rst.push(p);
+                        }
+                    }
+                }
+                return rst;
+            }
+
+            this.canstep = function (a, b) {
+                var x = a % this.width;
+                var y = parseInt(a / this.width);
+                var tx = b % this.width;
+                var ty = parseInt(b / this.width);
+                var dx = Math.abs(x - tx);
+                var dy = Math.abs(y - ty);
+                return dx && dy && dx + dy === 3;
+            }
+
+            this.move = function (p) {
+                if (this.state || this.paths.indexOf(p) >= 0) {
+                    return false;
+                }
+                if (this.canstep(this.current, p)) {
+                    this.paths.push(p);
+                    this.current = p;
+                    if (this.paths.length === this.width * this.height) {
+                        if (this.canstep(this.current, this.start)) {
+                            this.state = 2;
+                        } else {
+                            this.state = 1;
+                        }
+                    } else if (!this.check()) {
+                        this.state = -1;
+                    }
+                    return true;
+                }
+                return false;
+            }
+
+            this.check = function () {
+                var opts = this.getOptions();
+                for (var i = 0; i < opts.length; i++) {
+                    if (this.paths.indexOf(opts[i]) < 0) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            this.reset = function () {
+                this.state = 0;
+                this.current = this.start;
+                this.paths = [this.start];
+            }
+
+            this.init();
+        }
+
+        var $ = function (id) {
+            return document.getElementById(id);
+        }
+
+        var userAgent = navigator.userAgent; //取得浏览器的userAgent字符串
+        var isIE = userAgent.indexOf("MSIE") > -1 || userAgent.indexOf("Trident") > -1 || userAgent.indexOf("Edge") > -1;
+        var w = h = 7;
+        var cw = 70;
+        var game = new Game(w, h);
+        var area = $("area");
+        var paint = function () {
+            var lastSteps = store.get("horseLast49");
+            if (lastSteps) {
+                $("last").innerHTML = lastSteps;
+            }
+            var html = "";
+            var i;
+            for (i = 0; i < w * h; i++) {
+                var htm = "<div id='" + i + "' class='item";
+                var x = i % w;
+                var y = parseInt(i / w);
+                var left = x * cw + "px";
+                var top = y * cw + "px";
+                htm += "' style='left: " + left + "; top: " + top + ";'></div>";
+                html += htm;
+            }
+            area.innerHTML = html;
+
+            $("ctl").style.display = "none";
+            if (isIE) {
+                $(game.current).style["background"] = "#f60";
+            } else {
+                $(game.current).style["-webkit-animation"] = "flash 0.25s linear 0s infinite alternate";
+            }
+            for (i = 0; i < w * h; i++) {
+                $(i).onclick = function (e) {
+                    if (game.auting) {
+                        return;
+                    }
+                    var last = game.current;
+                    var id = e.target.id * 1;
+                    if (game.move(id)) {
+                        $(last).style["-webkit-animation"] = "";
+                        $(last).style["animation"] = "";
+                        $(last).style["background"] = "red";
+                        if (!game.state) {
+                            if (isIE) {
+                                $(game.current).style["background"] = "#f60";
+                            } else {
+                                $(game.current).style["-webkit-animation"] = "flash 0.25s linear 0s infinite alternate";
+                                $(game.current).style["animation"] = "flash 0.25s linear 0s infinite alternate";
+                            }
+                        } else {
+                            $(game.current).style["background"] = "red";
+                            if (game.state === 2) {
+                                $("info").innerHTML = "恭喜你找到了制胜秘诀";
+                                console.log(game.paths);
+                            } else if (game.state === 1) {
+                                $("info").innerHTML = "恭喜你，完美胜利";
+                            } else {
+                                $("info").innerHTML = "你只完成了" + game.paths.length + "步，还需加油";
+                            }
+                            $("ctl").style.display = "block";
+                            var lastSteps = store.get("horseLast49") || 0;
+                            if (lastSteps < game.paths.length) {
+                                store.set("horseLast49", game.paths.length);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        paint();
+
+
+        $("new").onclick = function (e) {
+            game.init();
+            paint();
+        }
+
+        $("reset").onclick = function (e) {
+            game.reset();
+            paint();
+        }
+
+        $("auto").onclick = function (e) {
+            if (!game.auting) {
+                $("desc").innerHTML = "正在自动计算，可能会很慢，请耐心点等着吧。。。";
+                new autoGame(game).do();
+                if (game.got) {
+                    debugger;
+                    $("desc").innerHTML = "终于找到一条路，不容易啊";
+                    var paths = game.paths;
+                    game.reset();
+                    for (var i = 0; i < paths.length; i++) {
+                        $(paths[i]).innerHTML = i + 1;
+                        if (i > 0) {
+                            $(paths[i]).style["-webkit-animation"] = "";
+                            $(paths[i]).style["animation"] = "";
+                            $(paths[i]).style["background"] = "";
+                        } else {
+                            if (isIE) {
+                                $(game.current).style["background"] = "#f60";
+                            } else {
+                                $(game.current).style["-webkit-animation"] = "flash 0.25s linear 0s infinite alternate";
+                                $(game.current).style["animation"] = "flash 0.25s linear 0s infinite alternate";
+                            }
+                        }
+                    }
+                } else {
+                    $("desc").innerHTML = "竟然没有找到路径";
+                }
+            }
+        }
+
+        var autoGame = function (game) {
+            this.game = game;
+            this.game.got = false;
+            this.back = function () {
+                if (this.game.paths.length > 1) {
+                    this.game.paths = this.game.paths.slice(0, -1);
+                    this.game.current = this.game.paths[this.game.paths.length - 1];
+                    return true;
+                }
+                return false;
+            }
+
+            this.autoStep = function () {
+                if (this.game.got) {
+                    return;
+                }
+
+                var opts = this.game.getOptions();
+                for (var i = 0; i < opts.length; i++) {
+                    if (this.game.got) {
+                        return;
+                    }
+                    var c = opts[i];
+                    this.game.paths.push(c);
+                    this.game.current = c;
+                    if (this.game.paths.length === this.game.width * this.game.height) {
+                        this.game.got = true;
+                    } else {
+                        this.autoStep();
+                    }
+                    if (this.game.got) {
+                        return;
+                    }
+                    this.back();
+                }
+            };
+
+            this.do = function () {
+                this.game.auting = true;
+                this.game.paths = [this.game.start];
+                this.game.current = this.game.start;
+                this.autoStep();
+                this.game.state = 0;
+                this.game.auting = false;
+            }
+        }
+    </script>
+</body>
+</html>

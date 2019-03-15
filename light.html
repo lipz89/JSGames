@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>九宝莲灯</title>
+    <script src="common.js"></script>
+    <style>
+
+        div.area {
+            margin: auto;
+            text-align: left;
+            position: relative;
+        }
+
+        div.top {
+            text-align: center;
+            padding: 20px;
+        }
+
+        div.title {
+            font-size: 40px;
+        }
+
+        div.desc {
+            font-size: 16px;
+        }
+
+        div.item {
+            display: inline-block;
+            border: 2px solid #AAA;
+            background: #fff;
+            box-sizing: border-box;
+            position: absolute;
+            text-align: center;
+        }
+
+        div.on {
+            background: #32cd32;
+        }
+
+        div.ctl div {
+            display: inline-block;
+            width: 60px;
+            border: 1px solid #999;
+            line-height: 30px;
+            background: #ccc;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body style='text-align:center'>
+    <div class="top">
+        <div class="title">九宝莲灯</div>
+        <div class="ctl">
+            <div id="widthUp">加宽</div>
+            <div id="widthDown">减宽</div>
+            <div id="reload">重置</div>
+            <div id="heightUp">加高</div>
+            <div id="heightDown">减高</div>
+        </div>
+        <div id="desc" class="desc">玩法：点亮所有格子就是胜利</div>
+        <div id="info" class="desc"></div>
+    </div>
+    <div id="area" class='area'>
+    </div>
+    <script type="text/javascript">
+        var tw = 400;
+        var $w = function (w, h) {
+            return parseInt(tw / Math.max(w, h));
+        }
+        function Game(w, h) {
+            this.w = w;
+            this.h = h;
+            this.total = this.w * this.h;
+            this.count = 0;
+            this.step = 0;
+            this.maps = [];
+            for (var i = 0; i < this.total; i++) {
+                this.maps.push(0);
+            }
+
+            var changecount = function (g, p) {
+                if (g.maps[p] === 0) {
+                    g.count--;
+                } else {
+                    g.count++;
+                }
+            };
+
+            this.shift = function (p, fn) {
+                var x = p % this.w;
+                var y = parseInt(p / this.w);
+                var flag = false;
+                if (this.maps[p] >= 0) {
+                    this.maps[p] = 1 - this.maps[p];
+                    changecount(this, p);
+                    fn && fn(p);
+                    flag = true;
+                }
+                if (x > 0 && this.maps[p - 1] >= 0) {
+                    this.maps[p - 1] = 1 - this.maps[p - 1];
+                    changecount(this, p - 1);
+                    fn && fn(p - 1);
+                    flag = true;
+                }
+                if (y > 0 && this.maps[p - this.w] >= 0) {
+                    this.maps[p - this.w] = 1 - this.maps[p - this.w];
+                    changecount(this, p - this.w);
+                    fn && fn(p - this.w);
+                    flag = true;
+                }
+                if (x < this.w - 1 && this.maps[p + 1] >= 0) {
+                    this.maps[p + 1] = 1 - this.maps[p + 1];
+                    changecount(this, p + 1);
+                    fn && fn(p + 1);
+                    flag = true;
+                }
+                if (y < this.h - 1 && this.maps[p + this.w] >= 0) {
+                    this.maps[p + this.w] = 1 - this.maps[p + this.w];
+                    changecount(this, p + this.w);
+                    fn && fn(p + this.w);
+                    flag = true;
+                }
+
+                if (flag) {
+                    this.step++;
+                    if (this.count === this.total) {
+                        this.ok = true;
+                    }
+                }
+            }
+        }
+
+        var game;
+        var w = h = 3;
+
+        function init() {
+            game = new Game(w, h);
+            var cw = $w(w, h);
+            $("area").style.width = cw * w + 1 + "px";
+            $("area").style.height = cw * h + 1 + "px";
+            var html = "";
+            var i;
+            for (i = 0; i < w * h; i++) {
+                var htm = "<div id='" + i + "' class='item";
+                var x = i % w;
+                var y = parseInt(i / w);
+                var left = x * cw + "px";
+                var top = y * cw + "px";
+                htm += "' style='left: " + left + "; top: " + top + ";width:" + (cw + 2) + "px;height:" + (cw + 2) + "px;line-height:" + (cw - 2) + "px;'></div>";
+                html += htm;
+            }
+            $("area").innerHTML = html;
+            var refresh = function () {
+                var info = "总共" + game.total + "个格子，还剩个" + (game.total - game.count) + "格子，点了" + game.step + "下";
+                $("info").innerHTML = info;
+            }
+            var callback = function (id) {
+                var clsName = $(id).className;
+                if (clsName.indexOf(" on") >= 0) {
+                    $(id).className = "item";
+                } else {
+                    $(id).className = "item on";
+                }
+            }
+            var clicks = {};
+            for (i = 0; i < w * h; i++) {
+                $(i).onclick = function (e) {
+                    if (game.ok) {
+                        return;
+                    }
+                    var id = e.target.id * 1;
+                    game.shift(id, callback);
+                    clicks[id] = !clicks[id];
+                    if (clicks[id]) {
+                        $(id).innerHTML = "*";
+                    } else {
+                        $(id).innerHTML = "";
+                    }
+                    refresh();
+                }
+            }
+
+            $("reload").onclick = function () {
+                init();
+            }
+            $("widthUp").onclick = function () {
+                if (w * h < 100 && w < 15) {
+                    w++;
+                    init();
+                }
+            }
+            $("widthDown").onclick = function () {
+                if (w * h > 6 && w > 2 && h > 1) {
+                    w--;
+                    init();
+                }
+            }
+            $("heightUp").onclick = function () {
+                if (w * h < 100 && h < 15) {
+                    h++;
+                    init();
+                }
+            }
+            $("heightDown").onclick = function () {
+                if (w * h > 6 && w > 1 && h > 2) {
+                    h--;
+                    init();
+                }
+            }
+            refresh();
+        }
+
+        init();
+    </script>
+</body>
+</html>
