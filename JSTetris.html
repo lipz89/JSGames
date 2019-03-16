@@ -1,0 +1,448 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>俄罗斯方块</title>
+    <style type="text/css">
+        body
+        {
+            background:#ccc;
+        }
+        #main
+        {
+            margin: 10px auto;
+            padding: 5px;
+            width: 450px;
+            height: 527px;
+            font-size: 12px;
+            cursor:pointer;
+        	background:#8a8;
+            border-top: 3px solid #bdb;
+            border-left: 3px solid #bdb;
+            border-right: 3px solid #575;
+            border-bottom: 3px solid #575;
+        }
+        #game
+        {
+            
+            width: 260px; 
+            height: 520px;
+            float: left;
+            background:#696;
+            padding: 1px 0px 0px 1px;
+            border-top: 3px solid #575;
+            border-left: 3px solid #575;
+            border-right: 3px solid #bdb;
+            border-bottom: 3px solid #bdb;
+        }
+        #right
+        {
+            float: right;
+            width: 180px;
+            height: 100%;
+        }
+        #next
+        {
+            width: 104px;
+            height: 104px;
+            margin: 10px auto;
+            background:#696;
+            padding: 1px 0px 0px 1px;
+            border-top: 3px solid #575;
+            border-left: 3px solid #575;
+            border-right: 3px solid #bdb;
+            border-bottom: 3px solid #bdb;
+        }
+        #info
+        {
+            width: 120px;
+            height: 200px;
+            margin: 20px auto;
+        }
+        #info div
+        {
+            margin: 28px auto;/*其他浏览器*/
+            *margin: 20px auto;/*IE7之前版本浏览器*/
+            border-bottom: 1px solid #03f;
+        }
+        #aler
+        {
+            color: #03f;
+        }
+        #game div, #next div
+        {
+            margin: 0px 1px 1px 0px;
+            float: left;
+            width: 21px;
+            height: 21px;
+        }
+        .block0
+        {
+            background: #fff;
+            border: 2px solid #dfe;
+        }
+        .block1
+        {
+            background: #595;
+            border-top: 2px solid #9d9;
+            border-left: 2px solid #9d9;
+            border-right: 2px solid #353;
+            border-bottom: 2px solid #353;
+        }
+        .block2
+        {
+            background: #c33;
+            border-top: 2px solid #f66;
+            border-left: 2px solid #f66;
+            border-right: 2px solid #933;
+            border-bottom: 2px solid #933;
+        }
+        .block3
+        {
+            background: #cc0;
+            border-top: 2px solid #ff6;
+            border-left: 2px solid #ff6;
+            border-right: 2px solid #990;
+            border-bottom: 2px solid #990;
+        }
+        .block4
+        {
+            background: #c60;
+            border-top: 2px solid #f93;
+            border-left: 2px solid #f93;
+            border-right: 2px solid #960;
+            border-bottom: 2px solid #960;
+        }
+        .block5
+        {
+            background: #0cf;
+            border-top: 2px solid #6ef;
+            border-left: 2px solid #6ef;
+            border-right: 2px solid #69c;
+            border-bottom: 2px solid #69c;
+        }
+        .block6
+        {
+            background: #c0f;
+            border-top: 2px solid #e6f;
+            border-left: 2px solid #e6f;
+            border-right: 2px solid #93c;
+            border-bottom: 2px solid #93c;
+        }
+        .block7
+        {
+            background: #3c3;
+            border-top: 2px solid #6f6;
+            border-left: 2px solid #6f6;
+            border-right: 2px solid #060;
+            border-bottom: 2px solid #060;
+        }
+    </style>
+</head>
+<body>
+    <bgsound id="sound"></bgsound>
+    <div id="main">
+        <div id="game">
+        </div>
+        <div id="right">
+            <div id="next">
+            </div>
+            <div id="info">
+                <div id="jifen">
+                    积分： 0</div>
+                <div id="level">
+                    关卡： 1</div>
+                <div onclick="Init()">
+                    <b>F2开始新游戏</b>
+                </div>
+                <div onclick="SwitchSound()">
+                    <b id="lblSound">F8关闭音效</b>
+                </div>
+                <div id="Div1">
+                    作者：李小虾</div>
+                <div id="Div2">
+                    日期：2010-10-17</div>
+                <div id="Div3">
+                    版本：1.0.4.1</div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+
+    var styles = new Array( // 共28种状态
+        0x0f00, 0x4444, 0x00f0, 0x2222, // 长条型的四种状态
+        0x04e0, 0x04c4, 0x00e4, 0x0464, // 'T'型的四种状态
+        0x4620, 0x6c00, 0x4620, 0x6c00, // 反'Z'型的四种状态
+        0x2640, 0xc600, 0x2640, 0xc600, // 'Z'型的四种状态
+        0x0622, 0x0740, 0x4460, 0x02e0, // 'L'型的四种状态
+        0x0644, 0x0470, 0x2260, 0x0e20, // 反'L'型的四种状态
+        0x0660, 0x0660, 0x0660, 0x0660 // 方块的四种状态
+    );
+
+    var blocks = new Array(220);
+    var mover = new Array(4);
+    var state = 0;
+    var delay = 500;
+    var style, nextStyle, color, nextColor;
+    var timer;
+    var score = 0;
+    var level = 1;
+    var sound = 1;
+
+    function Init() {
+        state = 0;
+        score = 0;
+        level = 1;
+        delay = 540 - level * 40;
+        for (var i = 0; i < blocks.length; i++)
+            blocks[i] = 0;
+        for (var i = 0; i < mover.length; i++)
+            mover[i] = 0;
+        clearInterval(timer);
+        FillGame();
+        CreateBlock();
+    }
+
+    function SwitchSound() {
+        if (sound) {
+            $("lblSound").innerText = "F8打开音效";
+            sound = 0;
+        } else {
+            $("lblSound").innerText = "F8关闭音效";
+            sound = 1;
+        }
+    }
+
+    function FillMover() {
+        var key = 0x8000;
+        for (var i = 0, j = 0; i < 16 && j < 4; i++) {
+            if ((styles[nextStyle] & key) != 0) {
+                mover[j] = (Math.floor(i / 4) - 2) * 10 + (i % 4 + 3);
+                j++;
+            }
+            key >>= 1;
+        }
+        MoveDir(20);
+        color = nextColor;
+        style = nextStyle;
+        FillGame();
+    }
+
+    function FillGame() {
+        var gameStr = "";
+        for (var i = 20; i < blocks.length; i++) {
+            var isMover = 0;
+            for (var j = 0; j < mover.length; j++) {
+                if (i == mover[j])
+                    isMover = 1;
+            }
+            if (isMover == 1)
+                gameStr += "<div class='block" + color + "'></div>";
+            else
+                gameStr += "<div class='block" + blocks[i] + "'></div>";
+        }
+        $("game").innerHTML = gameStr;
+        $("jifen").innerText = "积分： " + score;
+    }
+
+    function CreateBlock() {
+        if (state > 0)
+            FillMover();
+        nextStyle = Math.floor(Math.random() * 28);
+        //nextColor = Math.floor(nextStyle / 4) + 1;
+        nextColor = Math.floor(Math.random() * 7) + 1;
+        SetStyle();
+    }
+
+    function SetStyle() {
+        var key = 0x8000;
+        var nextStr = "";
+        for (var i = 0; i < 16; i++) {
+            if ((styles[nextStyle] & key) == 0)
+                nextStr += "<div class='block0'></div>";
+            else
+                nextStr += "<div class='block" + nextColor + "'></div>";
+            key >>= 1;
+        }
+        $("next").innerHTML = nextStr;
+    }
+
+    function Move() {
+        if (event.keyCode == 113) {
+            Init();
+        }
+        else if (event.keyCode == 119) {
+            SwitchSound();
+        }
+        else if (event.keyCode == 13) {
+            if (state == 0) {
+                state = 1;
+                timer = setInterval("Tick()", delay);
+                CreateBlock();
+            }
+            else if (state == 1) {
+                state = 2;
+                clearInterval(timer);
+            }
+            else if (state != 3) {
+                state = 1;
+                timer = setInterval("Tick()", delay);
+            }
+        }
+        else if (event.keyCode > 36 && event.keyCode < 41) {
+            if (state == 0) {
+                state = 1;
+                timer = setInterval("Tick()", delay);
+                CreateBlock();
+            }
+            else if (state == 2) {
+                state = 1;
+                timer = setInterval("Tick()", delay);
+            }
+            var l = event.keyCode - 36;
+            var dir = l == 2 ? 0 : l == 3 ? 1 : l == 4 ? 10 : -1;
+            MoveDir(dir);
+        }
+    }
+
+    function Tick() {
+        MoveDir(10);
+    }
+
+    function MoveDir(dir) {
+        if (dir == 0) {
+            ChangeMover();
+        }
+        else if (CanMove(dir)) {
+            for (var j = 0; j < mover.length; j++) {
+                mover[j] += dir;
+            }
+        }
+        FillGame();
+    }
+
+    function CanMove(dir) {
+        for (var j = 0; j < mover.length; j++) {
+            if (mover[j] % 10 > 8 && dir == 1)
+                return false;
+            if (mover[j] % 10 == 0 && dir == -1)
+                return false;
+            if (mover[j] > 209 && dir == 10) {
+                Recorblock();
+                return false;
+            }
+            if (blocks[mover[j] + dir] > 0) {
+                if (dir >= 10)
+                    Recorblock();
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function ChangeMover() {
+        var key = 0x8000;
+        var x, y;
+        for (var i = 0; i < 16; i++) {
+            if ((styles[style] & key) != 0) {
+                x = mover[0] % 10 - i % 4;
+                y = Math.floor(mover[0] / 10) - Math.floor(i / 4);
+                break;
+            }
+            key >>= 1;
+        }
+        var tempStyle = style;
+        if (style % 4 == 0)
+            tempStyle += 3;
+        else
+            tempStyle--;
+        var tempMover = new Array(4);
+        key = 0x8000;
+        for (var i = 0, j = 0; i < 16 && j < 4; i++) {
+            if ((styles[tempStyle] & key) != 0) {
+                var ix = i % 4 + x;
+                var iy = Math.floor(i / 4) + y;
+                if (ix < 0 || ix > 9 || iy > 19 || iy * 10 + ix >= 0 && blocks[iy * 10 + ix] > 0) {
+                    if (sound == 1)
+                        $("sound").src = "tetris/no.wav";
+                    return;
+                }
+                else {
+                    tempMover[j] = iy * 10 + ix;
+                    j++;
+                }
+            }
+            key >>= 1;
+        }
+        if (sound == 1)
+            $("sound").src = "tetris/turn.wav";
+        style = tempStyle;
+        for (var i = 0; i < 4; i++) {
+            mover[i] = tempMover[i];
+        }
+    }
+
+    function Recorblock() {
+        if (sound == 1)
+            $("sound").src = "tetris/down.wav";
+        for (var j = 0; j < mover.length; j++) {
+            blocks[mover[j]] = color;
+        }
+        var clear = new Array();
+        for (var i = 0; i < 22; i++) {
+            clear.push(i);
+            for (var j = 0; j < 10; j++) {
+                if (blocks[i * 10 + j] == 0) {
+                    clear.pop();
+                    break;
+                }
+            }
+        }
+        if (clear.length > 0) {
+            if (sound == 1)
+                $("sound").src = "tetris/clear.wav";
+            var rows = 0;
+            for (var i = clear[clear.length - 1]; i >= 2; i--) {
+                if (i == clear[clear.length - 1 - rows]) {
+                    rows++;
+                } else {
+                    for (var j = 0; j < 10; j++) {
+                        try {
+                            blocks[(i + rows) * 10 + j] = blocks[i * 10 + j];
+                        }
+                        catch (e) {
+                            blocks[i * 10 + j] = 0;
+                        }
+                    }
+                }
+            }
+            for (var i = 1; i <= clear.length; i++)
+                score += i * 10;
+            if (level < 11) {
+                level = Math.floor(score / 1000) + 1;
+                delay = 540 - level * 45;
+                clearInterval(timer);
+                timer = setInterval("Tick()", delay);
+                $("level").innerText = "关卡： " + level;
+            }
+        }
+        for (var j = 0; j < 20; j++) {
+            if (blocks[j] > 0) {
+                state = 3;
+                clearInterval(timer);
+                alert("游戏结束!");
+                return;
+            }
+        }
+        if (state != 3)
+            CreateBlock();
+    }
+
+    function $(id) {
+        return document.getElementById(id);
+    }
+
+    Init();
+    document.onkeydown = Move;
+</script>
+</html>

@@ -42,6 +42,10 @@
         {
             file: "JSPushBox.html",
             name: "推箱子"
+        },
+        {
+            file: "JSTetris.html",
+            name: "俄罗斯方块"
         }
     ]
 }
