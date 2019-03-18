@@ -139,7 +139,7 @@
     </style>
 </head>
 <body>
-    <bgsound id="sound"></bgsound>
+    <div id="sounddiv"></div>
     <div id="main">
         <div id="game">
         </div>
@@ -364,7 +364,7 @@
                 var iy = Math.floor(i / 4) + y;
                 if (ix < 0 || ix > 9 || iy > 19 || iy * 10 + ix >= 0 && blocks[iy * 10 + ix] > 0) {
                     if (sound == 1)
-                        $("sound").src = "tetris/no.wav";
+                        playSound("tetris/no.wav");
                     return;
                 }
                 else {
@@ -375,16 +375,14 @@
             key >>= 1;
         }
         if (sound == 1)
-            $("sound").src = "tetris/turn.wav";
+            playSound("tetris/turn.wav");
         style = tempStyle;
         for (var i = 0; i < 4; i++) {
             mover[i] = tempMover[i];
         }
     }
 
-    function Recorblock() {
-        if (sound == 1)
-            $("sound").src = "tetris/down.wav";
+    function Recorblock() {        
         for (var j = 0; j < mover.length; j++) {
             blocks[mover[j]] = color;
         }
@@ -400,7 +398,7 @@
         }
         if (clear.length > 0) {
             if (sound == 1)
-                $("sound").src = "tetris/clear.wav";
+               playSound("tetris/clear.wav");
             var rows = 0;
             for (var i = clear[clear.length - 1]; i >= 2; i--) {
                 if (i == clear[clear.length - 1 - rows]) {
@@ -425,6 +423,9 @@
                 timer = setInterval("Tick()", delay);
                 $("level").innerText = "关卡： " + level;
             }
+        }else{
+            if (sound == 1)
+                playSound("tetris/down.wav");
         }
         for (var j = 0; j < 20; j++) {
             if (blocks[j] > 0) {
@@ -440,6 +441,34 @@
 
     function $(id) {
         return document.getElementById(id);
+    }
+
+    function playSound(src)
+    {
+      var borswer = window.navigator.userAgent.toLowerCase();
+      if ( borswer.indexOf( "ie" ) >= 0 )
+      {
+        //IE内核浏览器
+        var strEmbed = '<embed id="sound" src="'+src+'" autostart="true" hidden="true" loop="false"></embed>';
+        if ( $( "sound" )==null )
+           $( "sounddiv" ).innerHTML=strEmbed;
+        else 
+           $( "sound" ).src=src;
+        var embed = document.embedPlay;
+
+        //浏览器不支持 audion，则使用 embed 播放
+        embed.volume = 100;
+        //embed.play();这个不需要
+      } else
+      {
+        //非IE内核浏览器
+        var strAudio = '<audio id="sound" src="'+src+'" hidden="true">';
+        if ( $( "sound" )==null )
+           $( "sounddiv" ).innerHTML=strAudio;
+        else 
+           $( "sound" ).src=src;
+         $( "sound" ).play();
+      }
     }
 
     Init();
