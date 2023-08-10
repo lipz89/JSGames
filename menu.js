@@ -31,10 +31,10 @@
             file: "eight.html",
             name: "八数码"
         },
-        {
-            file: "eightAStar.html",
-            name: "八数码A*算法演示"
-        },
+        // {
+        //     file: "eightAStar.html",
+        //     name: "八数码A*算法演示"
+        // },
         {
             file: "JSSnake.html",
             name: "贪吃蛇"

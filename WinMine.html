@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
     <meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
-    <title>É¨À×</title>
+    <title>æ‰«é›·</title>
     <style type="text/css">
         .td
         {
@@ -161,7 +161,7 @@
         }
     </style>
 </head>
-<body onload="InitGame()">
+<body onload="InitGame()" style="zoom: 2;">
     <div id="main">
         <div id="top">
             <div id="left">
@@ -190,17 +190,18 @@
     var isDown = 0;
 
     function InitGame() {
-        //³õÊ¼»¯ÓÎÏ·Êı¾İ
+        //åˆå§‹åŒ–æ¸¸æˆæ•°æ®
         clearInterval(timer);
         width = height = 10 + level * 2;
-        SetMine();
+        arr = new Array(width * height);
+        num = Math.floor(width * height / Math.floor(20 - level)) * 2;
         fin = num;
         state = -1;
         nomine = 0;
         timecount = 0;
         var wid = width * 16;
         var hei = height * 16;
-        //»æÖÆ±í¸ñ
+        //ç»˜åˆ¶è¡¨æ ¼
         var a = "";
         for (var i = 0; i < arr.length; i++) {
             a += "<div class='td' id=" + i + " onmousedown=MouseDown(this) onmouseup=MouseUp(this) onmouseover=MouseOver(this) onmouseout=MouseOut(this) ></div>";
@@ -226,14 +227,12 @@
         alert(str);
     }
 
-    function SetMine() {
-        num = Math.floor(width * height / Math.floor(20 - level)) * 2;
+    function SetMine(tid) {
         arrt = new Array(num);
-        arr = new Array(width * height);
         for (var i = 0; i < arrt.length; i++) {
             do {
                 arrt[i] = Math.floor(Math.random() * width * height);
-            } while (CheckMine(i));
+            } while (CheckMine(i,tid));
         }
         for (var i = 0; i < arr.length; i++) {
             arr[i] = 0;
@@ -243,9 +242,9 @@
         }
     }
 
-    function CheckMine(j) {
+    function CheckMine(j,tid) {
         for (var i = 0; i < j; i++) {
-            if (arrt[i] == arrt[j])
+            if (arrt[i] == arrt[j] || arrt[j]==tid)
                 return true;
         }
         return false;
@@ -259,10 +258,6 @@
         if (state > 0)
             return;
         $("btn").className = "face3";
-        if (state < 0) {
-            state = 0;
-            timer = setInterval(Tick, 1000);
-        }
         if (event.button <= 1) {
             isDown = 1;
             if (t.className == "td")
@@ -275,6 +270,11 @@
     }
 
     function MouseUp(t) {
+        if (state < 0) {
+            state = 0;
+            timer = setInterval(Tick, 1000);
+			SetMine(parseInt(t.id))
+        }
         if (state != 0)
             return;
         if (event.button <= 1) {
@@ -286,7 +286,7 @@
     }
 
     function LeftClick(t) {
-        //µ¥»÷ÊÂ¼ş
+        //å•å‡»äº‹ä»¶
         if (t.className == "tg" || t.className == "mine" || t.className == "tb")
             return;
         var xy = parseInt(t.id);
@@ -306,7 +306,7 @@
     }
 
     function RightClick(t) {
-        //ÓÒ¼üµ¥»÷£¬±ê¼Ç»òÈ¡Ïû±ê¼ÇµØÀ×
+        //å³é”®å•å‡»ï¼Œæ ‡è®°æˆ–å–æ¶ˆæ ‡è®°åœ°é›·
         if (t.className == "over" || t.className == "td") {
             t.className = "tg";
             fin--;
@@ -332,7 +332,7 @@
         }
         $("leave").innerText = fin;
         $("btn").className = "face" + state;
-        if (state == 2 && confirm("¹§Ï²Ê¤Àû£¡Òª½øÈëÏÂÒ»¹ØÂğ£¿")) {
+        if (state == 2 && confirm("æ­å–œèƒœåˆ©ï¼è¦è¿›å…¥ä¸‹ä¸€å…³å—ï¼Ÿ")) {
             if (level < 10)
                 level++;
             InitGame();
@@ -350,7 +350,7 @@
     }
 
     function CheckCount(x, y) {
-        //¼ì²éµ±Ç°ÇøÓò
+        //æ£€æŸ¥å½“å‰åŒºåŸŸ
         var count = 0;
         var t = $(x * width + y);
         if (t.className != "over" && t.className != "td" && t.className != "tb")
@@ -409,7 +409,7 @@
     }
 
     function KeyDown() {
-        //°´F2¿ªÊ¼ĞÂÓÎÏ·
+        //æŒ‰F2å¼€å§‹æ–°æ¸¸æˆ
         if (event.keyCode == 113)
             InitGame();
     }

@@ -1,265 +1,283 @@
 ﻿<!DOCTYPE html>
 <html>
-<head>
-    <title>八数码</title>
-    <script src="common.js"></script>
-    <style>
-        #result input {
-            display: inline-block;
-            font-family: "微软雅黑";
-            font-size: 60px;
-            font-weight: 900;
-            text-align: center;
-            width: 100px;
-            height: 100px;
-            /*background: url(images/0.png);*/
-            background-size: cover;
-        }
-    </style>
-</head>
-<body style='text-align:center'>
-    <p id="result">
-        <input type="text" id="r1">
-        <input type="text" id="r2">
-        <input type="text" id="r3"><br>
-        <input type="text" id="r4">
-        <input type="text" id="r5">
-        <input type="text" id="r6"><br>
-        <input type="text" id="r7">
-        <input type="text" id="r8">
-        <input type="text" id="r9"><br>
-    </p>
+	<head>
+		<title>八数码</title>
+		<script src="common.js"></script>
+		<style>
+			#result input {
+				display: inline-block;
+				font-family: "微软雅黑";
+				font-size: 60px;
+				font-weight: 900;
+				text-align: center;
+				width: 100px;
+				height: 100px;
+				/*background: url(images/0.png);*/
+				background-size: cover;
+				padding: 0;
+				margin: 3px 0;
+			}
+		</style>
+	</head>
+	<body style='text-align:center'>
+		<p id="result">
+			<input type="text" id="r1">
+			<input type="text" id="r2">
+			<input type="text" id="r3"><br>
+			<input type="text" id="r4">
+			<input type="text" id="r5">
+			<input type="text" id="r6"><br>
+			<input type="text" id="r7">
+			<input type="text" id="r8">
+			<input type="text" id="r9"><br>
+		</p>
 
-    <button onclick="run()">求解</button>
-    <script type="text/javascript">
+		<button onclick="run()">求解</button>
+		<script type="text/javascript">
+			function getId(id) {
+				return window.document.getElementById(id);
+			}
 
-        function getId(id) {
-            return window.document.getElementById(id);
-        }
+			var startArray = [
+				[0, 1, 2],
+				[5, 6, 3],
+				[4, 7, 8]
+			]; //初始化八数码数组
+			var N = 3;
+			var maxStep = 181440;
 
-        var startArray = [[5,4,6], [7,1,8], [3,0,2]];//初始化八数码数组
-        var N = 3;
-        var maxStep = 256;
+			var Graph = function(formData) {
+				this.form = formData;
+				this.evalue = 0;
+				this.udirect = 0;
+				this.parent = null;
+				this.direct = null;
+			};
 
-        var Graph = function (formData) {
-            this.form = formData;
-            this.evalue = 0;
-            this.udirect = 0;
-            this.parent = null;
-            this.direct = null;
-        };
+			var startGraph = new Graph(startArray);
+			var endArray = [
+				[1, 2, 3],
+				[4, 5, 6],
+				[7, 8, 0]
+			];
+			var endGraph = new Graph(endArray); //目标节点
+			evaluateGraph(startGraph, endGraph);
+			showGraph(startGraph);
 
-        var startGraph = new Graph(startArray);
-        var endArray = [[1, 2, 3], [4,5,6], [7, 8,0]];
-        var endGraph = new Graph(endArray);//目标节点
-        evaluateGraph(startGraph, endGraph);
-        showGraph(startGraph);
+			function showGraph(graph) {
+				var c = 1;
+				for (var i = 0; i < N; i++) {
+					for (var j = 0; j < N; j++) {
+						var s = 'r' + c++;
+						var v = graph.form[i][j];
+						if (v === 0) {
+							getId(s).value = "";
+						} else {
+							getId(s).value = v;
+						}
+					}
+				}
+			}
 
-        function showGraph(graph) {
-            var c = 1;
-            for (var i = 0; i < N; i++) {
-                for (var j = 0; j < N; j++) {
-                    var s = 'r' + c++;
-                    var v = graph.form[i][j];
-                    if (v === 0) {
-                        getId(s).value = "";
-                    } else {
-                        getId(s).value = v;
-                    }
-                }
-            }
-        }
+			//评估函数
+			function evaluateGraph(theGraph, endGraph) {
+				var differ = 0; //差距数
+				for (var i = 0; i < N; i++) {
+					for (var j = 0; j < N; j++) {
+						if (theGraph.form[i][j] !== endGraph.form[i][j]) {
+							differ++;
+						}
+					}
+				}
+				theGraph.evalue = differ;
+				return differ;
+			}
 
-        //评估函数
-        function evaluateGraph(theGraph, endGraph) {
-            var differ = 0;//差距数
-            for (var i = 0; i < N; i++) {
-                for (var j = 0; j < N; j++) {
-                    if (theGraph.form[i][j] !== endGraph.form[i][j]) { differ++; }
-                }
-            }
-            theGraph.evalue = differ;
-            return differ;
-        }
+			//移动数码组
+			function moveGraph(theGraph, direct) {
+				var hasGetBlank = 0; //是否找到空格位置
+				var ableMove = 1; //是否可移动
+				var i, j, tI, tJ;
+				//查找空格坐标i,j
+				for (i = 0; i < N; i++) {
+					for (j = 0; j < N; j++) {
+						if (theGraph.form[i][j] === 0) {
+							hasGetBlank = 1;
+							break;
+						}
+					}
+					if (hasGetBlank === 1)
+						break;
+				}
+				tI = i;
+				tJ = j;
+				//移动空格
+				switch (direct) {
+					case 1: //上
+						tI--;
+						if (tI < 0)
+							ableMove = 0; //移动超过边界
+						break;
+					case 2: //下
+						tI++;
+						if (tI >= N)
+							ableMove = 0;
+						break;
+					case 3: //左
+						tJ--;
+						if (tJ < 0)
+							ableMove = 0;
+						break;
+					case 4: //右
+						tJ++;
+						if (tJ >= N)
+							ableMove = 0;
+						break;
+				}
+				//Direct方向不能移动，返回原节点
+				if (ableMove === 0) {
+					return null;
+				}
+				//向Direct方向移动，生成新节点
+				var ta = [
+					[0, 0, 0],
+					[0, 0, 0],
+					[0, 0, 0]
+				];
+				var newGraph = new Graph(ta);
+				for (var x = 0; x < N; x++) //复制数码组
+				{
+					for (var y = 0; y < N; y++) {
+						newGraph.form[x][y] = theGraph.form[x][y];
+					}
+				}
 
-        //移动数码组
-        function moveGraph(theGraph, direct) {
-            var hasGetBlank = 0;//是否找到空格位置
-            var ableMove = 1;//是否可移动
-            var i, j, tI, tJ;
-            //查找空格坐标i,j
-            for (i = 0; i < N; i++) {
-                for (j = 0; j < N; j++) {
-                    if (theGraph.form[i][j] === 0) {
-                        hasGetBlank = 1;
-                        break;
-                    }
-                }
-                if (hasGetBlank === 1)
-                    break;
-            }
-            tI = i;
-            tJ = j;
-            //移动空格
-            switch (direct) {
-                case 1://上
-                    tI--;
-                    if (tI < 0)
-                        ableMove = 0;//移动超过边界
-                    break;
-                case 2://下
-                    tI++;
-                    if (tI >= N)
-                        ableMove = 0;
-                    break;
-                case 3://左
-                    tJ--;
-                    if (tJ < 0)
-                        ableMove = 0;
-                    break;
-                case 4://右
-                    tJ++;
-                    if (tJ >= N)
-                        ableMove = 0;
-                    break;
-            }
-            //Direct方向不能移动，返回原节点
-            if (ableMove === 0) {
-                return null;
-            }
-            //向Direct方向移动，生成新节点
-            var ta = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-            var newGraph = new Graph(ta);
-            for (var x = 0; x < N; x++)//复制数码组
-            {
-                for (var y = 0; y < N; y++) {
-                    newGraph.form[x][y] = theGraph.form[x][y];
-                }
-            }
+				//交换
+				newGraph.form[i][j] = newGraph.form[tI][tJ]; //交换空格和移动方向上的数字
+				newGraph.form[tI][tJ] = 0;
+				newGraph.direct = direct === 2 ? "上" : (direct === 1 ? "下" : (direct === 4 ? "左" : "右"));
+				return newGraph;
+			}
 
-            //交换
-            newGraph.form[i][j] = newGraph.form[tI][tJ];//交换空格和移动方向上的数字
-            newGraph.form[tI][tJ] = 0;
-            newGraph.direct = direct === 1 ? "上" : (direct === 2 ? "下" : (direct === 3 ? "左" : "右"));
-            return newGraph;
-        }
+			//搜索路径
+			function Search(beginGraph, endGraph) {
+				var g1, g2, g;
+				var step = 0; //深度
+				var direct; //方向
+				var i;
+				var front = -1,
+					rear = -1;
+				var closed = [];
+				g1 = beginGraph; //初始八数码节点
+				while (g1) //队列不空,从close队列中拿出一个节点
+				{
+					for (i = 1; i <= 4; i++) { //分别从四个方向推导出新子节点
+						direct = i;
+						if (direct === g1.udirect)
+							continue; //跳过屏蔽方向
+						g2 = moveGraph(g1, direct);
+						if (g2 != null) { //数码组是否可以移动
+							evaluateGraph(g1, endGraph);
+							evaluateGraph(g2, endGraph); //评价新的节点
+							if (g2.evalue <= g1.evalue) //利用评估值判断是否为优越节点
+							{ //若为优，将g2的父节点指向g1
+								g2.parent = g1;
+								//设置屏蔽方向，防止往回推
+								switch (direct) {
+									case 1: //上
+										g2.udirect = 2;
+										break;
+									case 2: //下
+										g2.udirect = 1;
+										break;
+									case 3: //左
+										g2.udirect = 4;
+										break;
+									case 4: //右
+										g2.udirect = 3;
+										break;
+								}
 
-        //搜索路径
-        function Search(beginGraph, endGraph) {
-            var g1, g2, g;
-            var step = 0;//深度
-            var direct;//方向
-            var i;
-            var front = -1, rear = -1;
-            var closed = [];
-            g1 = beginGraph;//初始八数码节点
-            while (g1)//队列不空,从close队列中拿出一个节点
-            {
-                for (i = 1; i <= 4; i++) {//分别从四个方向推导出新子节点
-                    direct = i;
-                    if (direct === g1.udirect)
-                        continue;//跳过屏蔽方向
-                    g2 = moveGraph(g1, direct);
-                    if (g2 != null) {//数码组是否可以移动
-                        evaluateGraph(g1, endGraph);
-                        evaluateGraph(g2, endGraph);//评价新的节点
-                        if (g2.evalue <= g1.evalue + 1)//利用评估值判断是否为优越节点
-                        { //若为优，将g2的父节点指向g1
-                            g2.parent = g1;
-                            //设置屏蔽方向，防止往回推
-                            switch (direct) {
-                                case 1://上
-                                    g2.udirect = 2;
-                                    break;
-                                case 2://下
-                                    g2.udirect = 1;
-                                    break;
-                                case 3://左
-                                    g2.udirect = 4;
-                                    break;
-                                case 4://右
-                                    g2.udirect = 3;
-                                    break;
-                            }
+								closed[++rear] = g2; //把优越节点放到close队列
+								if (g2.evalue === 0) //为0则搜索完成
+								{
+									g = g2;
+									break;
+								}
+							} else {
+								g2 = null;
+							} //抛弃劣质节点
+						}
+					}
 
-                            closed[++rear] = g2;//把优越节点放到close队列
-                            if (g2.evalue === 0)//为0则搜索完成
-                            {
-                                g = g2;
-                                break;
-                            }
-                        }
-                        else { g2 = null; }//抛弃劣质节点
-                    }
-                }
+					//搜索完成，继续退出
+					if (typeof g !== 'undefined') {
+						if (g.evalue === 0) {
+							break;
+						}
+					}
 
-                //搜索完成，继续退出
-                if (typeof g !== 'undefined') {
-                    if (g.evalue === 0) {
-                        break;
-                    }
-                }
+					step++; //统计深度
+					//if (step > 181440) {
+					//    break;
+					//}
+					if (step > maxStep) {
+						window.console.log("超过搜索深度！");
+						break;
+					}
 
-                step++;//统计深度
-                //if (step > 181440) {
-                //    break;
-                //}
-                if (step > maxStep) {
-                    window.alert("超过搜索深度！");
-                    break;
-                }
+					g1 = closed[++front]; //从close队列中拿出一个节点继续下一轮展开
+				}
+				window.console.log("搜索深度：" + step);
+				return g;
+			}
 
-                g1 = closed[++front];//从close队列中拿出一个节点继续下一轮展开
-            }
-            window.console.log("搜索深度：" + step);
-            return g;
-        }
+			function run() {
+				//获取输入的初始状态
+				var cpic = 1;
+				for (var i = 0; i < N; i++) {
+					for (var j = 0; j < N; j++) {
+						var rid = 'r' + cpic++;
+						var inputValue = getId(rid).value;
+						if (inputValue === "") {
+							inputValue = 0;
+						}
+						startArray[i][j] = parseInt(inputValue);
+						//getId(rid).value = "";
+					}
+				}
 
-        function run() {
-            //获取输入的初始状态
-            var cpic = 1;
-            for (var i = 0; i < N; i++) {
-                for (var j = 0; j < N; j++) {
-                    var rid = 'r' + cpic++;
-                    var inputValue = getId(rid).value;
-                    if (inputValue === "") { inputValue = 0; }
-                    startArray[i][j] = parseInt(inputValue);
-                    //getId(rid).value = "";
-                }
-            }
-
-            var top = -1;
-            var g;
-            g = Search(startGraph, endGraph);
-            if (g == null) {
-                window.alert("无解");
-                return;
-            }
-            //解序列存入堆栈
-            var p = g;
-            var st = [];
-            var sts = [];
-            while (p != null) {
-                if (p.direct != null) {
-                    st.push(p);
-                    sts.unshift(p.direct);
-                }
-                p = p.parent;
-            }
-            //st.pop();
-            window.console.log("步骤数：" + sts.length);
-            window.console.log("步骤：" + sts.join(","));
-            //动画执行
-            var si = window.setInterval(function () {
-                var p = st.pop();
-                if (p != null) {
-                    showGraph(p);
-                } else {
-                    window.clearInterval(si);
-                }
-            }, 200);
-        }
-
-    </script>
-</body>
+				var top = -1;
+				var g;
+				g = Search(startGraph, endGraph);
+				if (g == null) {
+					window.alert("无解");
+					return;
+				}
+				//解序列存入堆栈
+				var p = g;
+				var st = [];
+				var sts = [];
+				while (p != null) {
+					if (p.direct != null) {
+						st.push(p);
+						sts.unshift(p.direct);
+					}
+					p = p.parent;
+				}
+				//st.pop();
+				window.console.log("步骤数：" + sts.length);
+				window.console.log("步骤：" + sts.join(","));
+				//动画执行
+				var si = window.setInterval(function() {
+					var p = st.pop();
+					if (p != null) {
+						showGraph(p);
+					} else {
+						window.clearInterval(si);
+					}
+				}, 200);
+			}
+		</script>
+	</body>
 </html>

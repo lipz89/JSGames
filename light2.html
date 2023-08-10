@@ -1,0 +1,351 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>九宝莲灯</title>
+    <script src="common.js"></script>
+    <style>
+        div.area {
+            margin: auto;
+            text-align: left;
+            position: relative;
+        }
+
+        div.top {
+            text-align: center;
+            padding: 20px;
+        }
+
+        div.title {
+            font-size: 40px;
+        }
+
+        div.desc {
+            font-size: 16px;
+        }
+
+        div.item {
+            display: inline-block;
+            border: 2px solid #AAA;
+            background: #fff;
+            box-sizing: border-box;
+            position: absolute;
+            text-align: center;
+        }
+
+        div.on {
+            background: #32cd32;
+        }
+
+        div.wall {
+        }
+
+        div.ctl div {
+            display: inline-block;
+            width: 85px;
+            border: 1px solid #999;
+            line-height: 30px;
+            background: #ccc;
+        }
+
+        div#www {
+            position: absolute;
+            height: 30px;
+            background: -webkit-linear-gradient(left, #fff,#000); /* Safari 5.1 - 6.0 */
+            background: -o-linear-gradient(right, #fff,#000); /* Opera 11.1 - 12.0 */
+            background: -moz-linear-gradient(right, #fff,#000); /* Firefox 3.6 - 15 */
+            background: linear-gradient(right, #fff,#000); /* 标准的语法 */
+            bottom: 0;
+            left: 0;
+            font-size: 12px;
+            line-height: 22px;
+            padding: 5px;
+            box-sizing: border-box;
+            overflow: hidden;
+            text-align: right;
+            color: white;
+        }
+
+        div#hhh {
+            position: absolute;
+            width: 30px;
+            background: -webkit-linear-gradient(#fff,#000); /* Safari 5.1 - 6.0 */
+            background: -o-linear-gradient(#fff,#000); /* Opera 11.1 - 12.0 */
+            background: -moz-linear-gradient(#fff,#000); /* Firefox 3.6 - 15 */
+            background: linear-gradient( #fff,#000); /* 标准的语法 */
+            top: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            padding: 5px;
+            box-sizing: border-box;
+            overflow: hidden;
+            color: white;
+        }
+
+            div#hhh div {
+                bottom: 0;
+                position: absolute;
+                width: 12px;
+                padding: 5px;
+            }
+
+
+        div#reload {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            right: 0;
+            bottom: 0;
+            background: #666;
+            padding: 5px;
+            box-sizing: border-box;
+            font-size: 20px;
+            color: white;
+        }
+    </style>
+</head>
+<body style='text-align:center'>
+    <div class="top">
+        <div class="title">九宝莲灯</div>
+        <div id="desc" class="desc">玩法：点亮所有格子就是胜利</div>
+        <div id="info" class="desc"></div>
+    </div>
+    <div id="area" class='area'>
+    </div>
+    <script type="text/javascript">
+        var tw = 400;
+        var $w = function (w, h) {
+            return parseInt(tw / Math.max(w, h));
+        }
+        function Game(w, h) {
+            this.w = w;
+            this.h = h;
+            this.total = this.w * this.h;
+            this.count = 0;
+            this.step = 0;
+            this.maps = [];
+            for (var i = 0; i < this.total; i++) {
+                this.maps.push(0);
+            }
+
+            var changecount = function (g, p) {
+                if (g.maps[p] === 0) {
+                    g.count--;
+                } else {
+                    g.count++;
+                }
+            };
+
+            this.shift = function (p, fn) {
+                var x = p % this.w;
+                var y = parseInt(p / this.w);
+                var flag = false;
+                if (this.maps[p] >= 0) {
+                    this.maps[p] = 1 - this.maps[p];
+                    changecount(this, p);
+                    fn && fn(p);
+                    flag = true;
+                }
+                if (x > 0 && this.maps[p - 1] >= 0) {
+                    this.maps[p - 1] = 1 - this.maps[p - 1];
+                    changecount(this, p - 1);
+                    fn && fn(p - 1);
+                    flag = true;
+                }
+                if (y > 0 && this.maps[p - this.w] >= 0) {
+                    this.maps[p - this.w] = 1 - this.maps[p - this.w];
+                    changecount(this, p - this.w);
+                    fn && fn(p - this.w);
+                    flag = true;
+                }
+                if (x < this.w - 1 && this.maps[p + 1] >= 0) {
+                    this.maps[p + 1] = 1 - this.maps[p + 1];
+                    changecount(this, p + 1);
+                    fn && fn(p + 1);
+                    flag = true;
+                }
+                if (y < this.h - 1 && this.maps[p + this.w] >= 0) {
+                    this.maps[p + this.w] = 1 - this.maps[p + this.w];
+                    changecount(this, p + this.w);
+                    fn && fn(p + this.w);
+                    flag = true;
+                }
+
+                if (flag) {
+                    this.step++;
+                    if (this.count === this.total) {
+                        this.ok = true;
+                    }
+                }
+            }
+        }
+
+        var game;
+        var w = h = 3;
+
+        function init() {
+                            console.log(w,h)
+            game = new Game(w, h);
+            var cw = $w(w, h);
+            $("area").style.width = cw * w + 31 + "px";
+            $("area").style.height = cw * h + 31 + "px";
+            var html = "";
+            var i;
+            for (i = 0; i < w * h; i++) {
+                var htm = "<div id='" + i + "' class='item";
+                var x = i % w;
+                var y = parseInt(i / w);
+                var left = x * cw + "px";
+                var top = y * cw + "px";
+                htm += "' style='left: " + left + "; top: " + top + ";width:" + (cw + 2) + "px;height:" + (cw + 2) + "px;line-height:" + (cw - 2) + "px;'></div>";
+                html += htm;
+            }
+            html += '<div id="www" style="width:' + (cw * w + 1) + 'px;">滑动改变宽度</div><div id="hhh" style="height:' + (cw * h + 1) + 'px;"><div>滑动改变高度</div></div><div id="reload">回</div>';
+            $("area").innerHTML = html;
+            var refresh = function () {
+                var info = "总共" + game.total + "个格子，还剩个" + (game.total - game.count) + "格子，点了" + game.step + "下";
+                $("info").innerHTML = info;
+            }
+            var callback = function (id) {
+                var clsName = $(id).className;
+                if (clsName.indexOf(" on") >= 0) {
+                    $(id).className = "item";
+                } else {
+                    $(id).className = "item on";
+                }
+            }
+            var clicks = {};
+            for (i = 0; i < w * h; i++) {
+                $(i).onclick = function (e) {
+                    if (game.ok) {
+                        return;
+                    }
+                    var id = e.target.id * 1;
+                    game.shift(id, callback);
+                    clicks[id] = !clicks[id];
+                    if (clicks[id]) {
+                        $(id).innerHTML = "*";
+                    } else {
+                        $(id).innerHTML = "";
+                    }
+                    refresh();
+                }
+            }
+
+            var wx, hy;
+            $("www").ontouchstart = function (e) {
+                event.preventDefault();
+                var touch = e.targetTouches[0];
+                wx = touch.pageX;
+            }
+            $("www").ontouchmove = function (e) {
+                event.preventDefault();
+                var touch = e.targetTouches[0];
+                if (wx) {
+                    if (touch.pageX - wx > 30) {
+                        if (w * h < 100 && w < 15) {
+                            wx = touch.pageX;
+                            w++;
+                            init();
+                        }
+                    } else if (wx - touch.pageX > 30) {
+                        if (w * h > 6 && w > 2 && h > 1) {
+                            wx = touch.pageX;
+                            w--;
+                            init();
+                        }
+                    }
+                }
+            }
+            $("www").ontouchend = function (e) {
+                wx = null;
+            }
+            $("hhh").ontouchstart = function (e) {
+                event.preventDefault();
+                var touch = e.targetTouches[0];
+                hy = touch.pageY;
+            }
+            $("hhh").ontouchmove = function (e) {
+                event.preventDefault();
+                var touch = e.targetTouches[0];
+                if (hy) {
+                    if (touch.pageY - hy > 30) {
+                        if (w * h < 100 && h < 15) {
+                            hy = touch.pageY;
+                            h++;
+                            init();
+                        }
+                    } else if (hy - touch.pageY > 30) {
+                        if (w * h > 6 && w > 1 && h > 2) {
+                            hy = touch.pageY;
+                            h--;
+                            init();
+                        }
+                    }
+                }
+            }
+            $("hhh").ontouchend = function (e) {
+                hy = null;
+            }
+   
+            $("www").onmousedown = function (e) {
+                event.preventDefault();
+                wx = e.x;
+            }
+            $("www").onmousemove = function (e) {
+                event.preventDefault();
+                if (wx) {
+                    if (e.x - wx > 30) {
+                        if (w * h < 100 && w < 15) {
+                            wx = e.x;
+                            w++;
+                            init();
+                        }
+                    } else if (wx - e.x > 30) {
+                        if (w * h > 6 && w > 2 && h > 1) {
+                            wx = e.x;
+                            w--;
+                            init();
+                        }
+                    }
+                }
+            }
+            $("www").onmouseup = function (e) {
+                wx = null;
+            }
+            $("hhh").onmousedown = function (e) {
+                event.preventDefault();
+                hy = e.y;
+            }
+            $("hhh").onmousemove = function (e) {
+                event.preventDefault();
+                if (hy) {
+                    if (e.y - hy > 30) {
+                        if (w * h < 100 && h < 15) {
+                            hy = e.y;
+                            h++;
+                            init();
+                        }
+                    } else if (hy - e.y > 30) {
+                        if (w * h > 6 && w > 1 && h > 2) {
+                            hy = e.y;
+                            h--;
+                            init();
+                        }
+                    }
+                }
+            }
+            $("hhh").onmouseup = function (e) {
+                hy = null;
+            }
+
+            $("reload").onclick = function () {
+                init();
+            }
+            refresh();
+        }
+
+        init();
+    </script>
+</body>
+</html>
